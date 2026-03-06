@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Board {
   id: string;
@@ -17,6 +18,7 @@ export default function BoardList() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
   const fetchBoards = async () => {
     try {
@@ -48,13 +50,19 @@ export default function BoardList() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`Delete board "${name}"? This cannot be undone.`)) return;
+  const handleDelete = (id: string, name: string) => {
+    setConfirmDelete({ id, name });
+  };
+
+  const confirmDeleteBoard = async () => {
+    if (!confirmDelete) return;
     try {
-      await api.deleteBoard(id);
+      await api.deleteBoard(confirmDelete.id);
       fetchBoards();
     } catch {
       setError('Failed to delete board');
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -182,6 +190,13 @@ export default function BoardList() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        message={confirmDelete ? `Delete board "${confirmDelete.name}"? This cannot be undone.` : ''}
+        onConfirm={confirmDeleteBoard}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

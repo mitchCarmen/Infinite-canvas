@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BoardList from './components/BoardList';
 import CanvasView from './components/CanvasView';
+import { ToastProvider } from './components/Toast';
 
 function parseHash(): { route: string; boardId?: string } {
   const hash = window.location.hash.replace(/^#\/?/, '');
@@ -20,9 +21,13 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  if (routeState.route === 'board' && routeState.boardId) {
-    return <CanvasView boardId={routeState.boardId} />;
-  }
-
-  return <BoardList />;
+  return (
+    <ToastProvider>
+      {routeState.route === 'board' && routeState.boardId ? (
+        <CanvasView boardId={routeState.boardId} />
+      ) : (
+        <BoardList />
+      )}
+    </ToastProvider>
+  );
 }
