@@ -38,14 +38,33 @@ function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
   });
 }
 
+function mapEdgeRouting(routing?: string): string | undefined {
+  switch (routing) {
+    case 'straight':
+      return 'straight';
+    case 'step':
+      return 'smoothstep';
+    case 'bezier':
+      return 'default';
+    default:
+      return undefined;
+  }
+}
+
 function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
-  return canvasEdges.map((e) => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    label: e.label,
-    style: e.style as Record<string, string> | undefined,
-  }));
+  return canvasEdges.map((e) => {
+    const edgeStyle = e.style as Record<string, string> | undefined;
+    const routing = edgeStyle?.routing;
+    const type = mapEdgeRouting(routing);
+    return {
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      label: e.label,
+      ...(type ? { type } : {}),
+      style: edgeStyle,
+    };
+  });
 }
 
 export function useBoard(boardId: string) {

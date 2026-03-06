@@ -154,6 +154,16 @@ export function createApp(boardsDir: string) {
     }
   });
 
+  app.patch('/api/boards/:id/edges/:edgeId', async (req, res, next) => {
+    try {
+      const { label, style } = req.body;
+      const board = await store.updateEdge(req.params.id, req.params.edgeId, { label, style }, 'user');
+      res.json(board);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   app.delete('/api/boards/:id/edges/:edgeId', async (req, res, next) => {
     try {
       const board = await store.deleteEdge(req.params.id, req.params.edgeId, 'user');

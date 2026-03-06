@@ -48,6 +48,12 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ source, target, label }),
     }).then(r => r.json()),
+  updateEdge: (boardId: string, edgeId: string, data: any) =>
+    fetch(`${BASE}/boards/${boardId}/edges/${edgeId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(r => r.json()),
   deleteEdge: (boardId: string, edgeId: string) =>
     fetch(`${BASE}/boards/${boardId}/edges/${edgeId}`, { method: 'DELETE' }).then(r => r.json()),
   createGroup: (boardId: string, label: string, nodeIds: string[]) =>

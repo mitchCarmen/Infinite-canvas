@@ -72,6 +72,7 @@ export default function ContextMenu(props: ContextMenuProps) {
   const [shapeSubmenuOpen, setShapeSubmenuOpen] = useState(false);
   const [layerSubmenuOpen, setLayerSubmenuOpen] = useState(false);
   const [addNodeSubmenuOpen, setAddNodeSubmenuOpen] = useState(false);
+  const [routingSubmenuOpen, setRoutingSubmenuOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -207,16 +208,20 @@ export default function ContextMenu(props: ContextMenuProps) {
   }
 
   if (props.type === 'edge') {
-    const { edgeId, edgeSource, edgeTarget, boardId, onRefetch, onClose } = props;
+    const { edgeId, boardId, onRefetch, onClose } = props;
 
     const handleEditLabel = async () => {
       const newLabel = window.prompt('Edge label:');
       if (newLabel !== null) {
-        // No update endpoint; delete and recreate with new label
-        await api.deleteEdge(boardId, edgeId);
-        await api.createEdge(boardId, edgeSource, edgeTarget, newLabel);
+        await api.updateEdge(boardId, edgeId, { label: newLabel });
         onRefetch();
       }
+      onClose();
+    };
+
+    const handleSetRouting = async (routing: string) => {
+      await api.updateEdge(boardId, edgeId, { style: { routing } });
+      onRefetch();
       onClose();
     };
 
@@ -226,11 +231,37 @@ export default function ContextMenu(props: ContextMenuProps) {
       onClose();
     };
 
+    const ROUTING_OPTIONS = [
+      { value: 'bezier', label: 'Bezier' },
+      { value: 'straight', label: 'Straight' },
+      { value: 'step', label: 'Step' },
+    ];
+
     return (
       <div ref={menuRef} className="context-menu" style={menuStyle}>
         <button className="context-menu-item" onClick={handleEditLabel}>
           Edit Label
         </button>
+        <div
+          className="context-menu-item context-menu-submenu-trigger"
+          onMouseEnter={() => setRoutingSubmenuOpen(true)}
+          onMouseLeave={() => setRoutingSubmenuOpen(false)}
+        >
+          Routing &#9656;
+          {routingSubmenuOpen && (
+            <div className="context-menu context-submenu">
+              {ROUTING_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  className="context-menu-item"
+                  onClick={() => handleSetRouting(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="context-menu-separator" />
         <button className="context-menu-item context-menu-item-danger" onClick={handleDelete}>
           Delete

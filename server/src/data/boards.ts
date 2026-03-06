@@ -321,6 +321,27 @@ export class BoardStore {
     return board;
   }
 
+  async updateEdge(
+    boardId: string,
+    edgeId: string,
+    updates: { label?: string; style?: Record<string, string> },
+    actor: 'user' | 'claude',
+  ): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    const idx = board.edges.findIndex(e => e.id === edgeId);
+    if (idx === -1) throw new Error('Edge not found');
+
+    const edge = board.edges[idx];
+    if (updates.label !== undefined) edge.label = updates.label;
+    if (updates.style !== undefined) edge.style = updates.style;
+
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'updated_edge', `Updated edge`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
   async deleteEdge(boardId: string, edgeId: string, actor: 'user' | 'claude'): Promise<Board> {
     const board = this._readBoardFile(boardId);
     const idx = board.edges.findIndex(e => e.id === edgeId);
