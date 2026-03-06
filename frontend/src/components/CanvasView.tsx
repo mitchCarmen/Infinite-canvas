@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useRef } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -23,6 +23,7 @@ import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
 import FloatingStyleBar from './FloatingStyleBar';
+import SearchBar from './SearchBar';
 
 interface CanvasViewProps {
   boardId: string;
@@ -94,6 +95,13 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   }, [nodes, boardId, refetch, snapshot]);
 
   const [searchBarOpen, setSearchBarOpen] = useState(false);
+  const [dimmedNodeIds, setDimmedNodeIds] = useState<Set<string>>(new Set());
+  const dimmedNodeIdsRef = useRef<Set<string>>(new Set());
+
+  const handleFilterNodes = useCallback((dimmed: Set<string>) => {
+    dimmedNodeIdsRef.current = dimmed;
+    setDimmedNodeIds(dimmed);
+  }, []);
 
   const shortcutHandlers = useMemo(
     () => ({
@@ -115,26 +123,33 @@ function CanvasInner({ boardId }: CanvasViewProps) {
 
   useKeyboardShortcuts(shortcutHandlers);
 
-  // Enhance nodes with editing state and callbacks via data
+  // Enhance nodes with editing state, callbacks, and search dimming
   const enhancedNodes = useMemo(() => {
-    return nodes.map((node) => ({
-      ...node,
-      data: {
-        ...node.data,
-        boardId,
-        isEditing: node.id === editingNodeId,
-        onStartEdit: () => setEditingNodeId(node.id),
-        onFinishEdit: async (newLabel: string) => {
-          setEditingNodeId(null);
-          if (newLabel !== node.data.label) {
-            await api.updateNode(boardId, node.id, { label: newLabel });
-            refetch();
-          }
+    return nodes.map((node) => {
+      const isDimmed = dimmedNodeIds.size > 0 && dimmedNodeIds.has(node.id);
+      return {
+        ...node,
+        style: {
+          ...node.style,
+          ...(isDimmed ? { opacity: 0.2 } : {}),
         },
-        onCancelEdit: () => setEditingNodeId(null),
-      },
-    }));
-  }, [nodes, editingNodeId, boardId, refetch]);
+        data: {
+          ...node.data,
+          boardId,
+          isEditing: node.id === editingNodeId,
+          onStartEdit: () => setEditingNodeId(node.id),
+          onFinishEdit: async (newLabel: string) => {
+            setEditingNodeId(null);
+            if (newLabel !== node.data.label) {
+              await api.updateNode(boardId, node.id, { label: newLabel });
+              refetch();
+            }
+          },
+          onCancelEdit: () => setEditingNodeId(null),
+        },
+      };
+    });
+  }, [nodes, editingNodeId, boardId, refetch, dimmedNodeIds]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -335,6 +350,14 @@ function CanvasInner({ boardId }: CanvasViewProps) {
             selectedNodes={selectedNodes}
             boardId={boardId}
             onRefetch={refetch}
+          />
+        )}
+        {searchBarOpen && (
+          <SearchBar
+            nodes={nodes}
+            onFilterNodes={handleFilterNodes}
+            onClose={() => setSearchBarOpen(false)}
+            reactFlowInstance={reactFlowInstance}
           />
         )}
       </div>
