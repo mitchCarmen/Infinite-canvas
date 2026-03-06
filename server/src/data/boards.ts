@@ -111,6 +111,26 @@ export class BoardStore {
     return this._readBoardFile(boardId);
   }
 
+  async updateBoardMetadata(boardId: string, updates: { name?: string; description?: string; thumbnail?: string }, actor: 'user' | 'claude'): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    if (updates.name !== undefined) board.name = updates.name;
+    if (updates.description !== undefined) board.description = updates.description;
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'updated_board', `Updated board metadata`));
+    this._writeBoardFile(board);
+
+    const index = this._readIndex();
+    const entry = index.find(e => e.id === boardId);
+    if (entry) {
+      if (updates.name !== undefined) entry.name = updates.name;
+      if (updates.thumbnail !== undefined) entry.thumbnail = updates.thumbnail;
+      entry.updatedAt = board.updatedAt;
+      this._writeIndex(index);
+    }
+
+    return board;
+  }
+
   async deleteBoard(boardId: string): Promise<void> {
     const p = this._boardPath(boardId);
     if (!existsSync(p)) throw new Error('Board not found');

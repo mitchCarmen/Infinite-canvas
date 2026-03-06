@@ -65,17 +65,8 @@ export function createApp(boardsDir: string) {
 
   app.patch('/api/boards/:id', async (req, res, next) => {
     try {
-      // Read existing board, apply metadata updates, write back
-      const board = await store.readBoard(req.params.id);
-      // For now only thumbnail is a metadata field on the index
-      // We update the board and re-save
-      if (req.body.name !== undefined) board.name = req.body.name;
-      if (req.body.description !== undefined) board.description = req.body.description;
-      board.updatedAt = new Date().toISOString();
-      // Access private write via a node update with no changes (hacky but works for now)
-      // Better: expose an updateBoardMetadata on the store. For now, use a workaround.
-      // Since BoardStore doesn't expose a metadata update, we'll write directly via the store pattern.
-      // TODO: Add updateBoardMetadata to BoardStore for cleanliness.
+      const { name, description, thumbnail } = req.body;
+      const board = await store.updateBoardMetadata(req.params.id, { name, description, thumbnail }, 'user');
       res.json(board);
     } catch (err) {
       next(err);
