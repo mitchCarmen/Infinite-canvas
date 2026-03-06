@@ -24,6 +24,7 @@ import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
 import FloatingStyleBar from './FloatingStyleBar';
 import SearchBar from './SearchBar';
+import ActivityLogDrawer from './ActivityLogDrawer';
 
 interface CanvasViewProps {
   boardId: string;
@@ -361,6 +362,13 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           />
         )}
       </div>
+      {activityLogOpen && (
+        <ActivityLogDrawer
+          open={activityLogOpen}
+          activityLog={board?.activityLog ?? []}
+          onClose={() => setActivityLogOpen(false)}
+        />
+      )}
     </div>
   );
 }
