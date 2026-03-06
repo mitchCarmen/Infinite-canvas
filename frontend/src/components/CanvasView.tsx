@@ -29,6 +29,7 @@ import FloatingStyleBar from './FloatingStyleBar';
 import SearchBar from './SearchBar';
 import ActivityLogDrawer from './ActivityLogDrawer';
 import AlignmentGuides from './AlignmentGuides';
+import LoadingSpinner from './LoadingSpinner';
 
 interface CanvasViewProps {
   boardId: string;
@@ -344,9 +345,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-        <div className="loading-spinner" />
-        <span style={{ marginLeft: 12 }}>Loading board...</span>
+      <div className="canvas-loading">
+        <LoadingSpinner size={40} label="Loading board..." />
       </div>
     );
   }
@@ -418,18 +418,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           </div>
         )}
         {!loading && nodes.length === 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              color: '#999',
-              fontSize: 18,
-              pointerEvents: 'none',
-            }}
-          >
-            Drag a shape from the toolbar or double-click to add a sticky note.
+          <div className="canvas-empty-state">
+            Drag shapes from the toolbar or let Claude build something
           </div>
         )}
         {contextMenu && <ContextMenu {...contextMenu} />}

@@ -881,6 +881,137 @@ body {
   border-color: var(--accent-hover);
 }
 
+/* Loading Spinner */
+
+.loading-spinner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-spinner {
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Canvas loading and empty states */
+
+.canvas-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.canvas-empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  pointer-events: none;
+  text-align: center;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* Empty board list enhancements */
+
+.board-list-empty-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.board-list-empty-sub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.btn-large {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Button loading state */
+
+.btn-loading {
+  opacity: 0.7;
+  pointer-events: none;
+  position: relative;
+}
+
+.btn-loading::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+/* Responsive layout */
+
+@media (max-width: 768px) {
+  .toolbar {
+    width: 52px;
+    min-width: 52px;
+  }
+
+  .toolbar-section {
+    padding: 8px;
+  }
+
+  .toolbar-name,
+  .toolbar-name-input,
+  .toolbar-label {
+    display: none;
+  }
+
+  .toolbar-shapes {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .toolbar-actions .btn-small {
+    font-size: 0;
+    padding: 6px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .toolbar-back {
+    margin-right: 0;
+    display: block;
+    text-align: center;
+  }
+
+  .toolbar-dropdown-wrapper .btn-small::first-letter {
+    font-size: 0.75rem;
+  }
+}
+
 /* Export: hide UI elements during capture */
 
 .export-hide-ui .react-flow__minimap,

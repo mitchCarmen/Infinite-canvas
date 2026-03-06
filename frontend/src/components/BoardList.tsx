@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import ConfirmDialog from './ConfirmDialog';
+import LoadingSpinner from './LoadingSpinner';
 
 interface Board {
   id: string;
@@ -80,7 +81,11 @@ export default function BoardList() {
   };
 
   if (loading) {
-    return <div className="board-list-loading">Loading boards...</div>;
+    return (
+      <div className="board-list-loading">
+        <LoadingSpinner size={40} label="Loading boards..." />
+      </div>
+    );
   }
 
   return (
@@ -131,9 +136,10 @@ export default function BoardList() {
 
       {boards.length === 0 && !showCreate ? (
         <div className="board-list-empty">
-          <p>No boards yet.</p>
-          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-            Create your first board
+          <p className="board-list-empty-heading">No boards yet</p>
+          <p className="board-list-empty-sub">Create a board to get started with InfiniteCanvas</p>
+          <button className="btn btn-primary btn-large" onClick={() => setShowCreate(true)}>
+            Create Your First Board
           </button>
         </div>
       ) : (
