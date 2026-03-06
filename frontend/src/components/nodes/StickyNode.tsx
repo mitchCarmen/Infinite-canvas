@@ -1,5 +1,6 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
+import { useNodeEdit } from './useNodeEdit';
 
 export default function StickyNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 200;
@@ -8,6 +9,7 @@ export default function StickyNode({ data, selected }: NodeProps) {
   const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#e6db00';
   const color = (data.style as Record<string, string>)?.color ?? '#000000';
   const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
+  const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
   return (
     <div style={{ width, height, position: 'relative' }}>
@@ -27,21 +29,36 @@ export default function StickyNode({ data, selected }: NodeProps) {
           stroke={borderColor}
           strokeWidth={1}
         />
-        <foreignObject x={8} y={8} width={width - 16} height={height - 16}>
-          <div
-            style={{
-              color,
-              fontSize,
-              wordWrap: 'break-word',
-              overflow: 'hidden',
-              width: '100%',
-              height: '100%',
-            }}
-          >
-            {data.label as string}
-          </div>
-        </foreignObject>
+        {!isEditing && (
+          <foreignObject x={8} y={8} width={width - 16} height={height - 16}>
+            <div
+              style={{
+                color,
+                fontSize,
+                wordWrap: 'break-word',
+                overflow: 'hidden',
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              {label}
+            </div>
+          </foreignObject>
+        )}
       </svg>
+      {isEditing && (
+        <div className="node-edit-overlay" style={{ padding: 8 }}>
+          <input
+            ref={inputRef}
+            className="node-edit-input"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            style={{ fontSize, color }}
+          />
+        </div>
+      )}
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
       <Handle type="target" position={Position.Left} id="left" />

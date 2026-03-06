@@ -1,11 +1,13 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
+import { useNodeEdit } from './useNodeEdit';
 
 export default function ImageNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 200;
   const height = (data.height as number) ?? 200;
   const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#cccccc';
   const imageUrl = data.imageUrl as string | undefined;
+  const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
   return (
     <div style={{ width, height, position: 'relative' }}>
@@ -29,7 +31,7 @@ export default function ImageNode({ data, selected }: NodeProps) {
             height={height - 2}
             preserveAspectRatio="xMidYMid meet"
           />
-        ) : (
+        ) : !isEditing ? (
           <text
             x={width / 2}
             y={height / 2}
@@ -38,10 +40,22 @@ export default function ImageNode({ data, selected }: NodeProps) {
             fill="#999"
             fontSize="14px"
           >
-            No image
+            {label || 'No image'}
           </text>
-        )}
+        ) : null}
       </svg>
+      {isEditing && (
+        <div className="node-edit-overlay">
+          <input
+            ref={inputRef}
+            className="node-edit-input"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+          />
+        </div>
+      )}
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
       <Handle type="target" position={Position.Left} id="left" />

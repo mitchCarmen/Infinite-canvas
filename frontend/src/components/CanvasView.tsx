@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -9,13 +9,17 @@ import {
   SelectionMode,
   useReactFlow,
   type ReactFlowInstance,
+  type Connection,
+  type Edge,
+  type NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { nodeTypes } from './nodes';
+import { nodeTypes as baseNodeTypes } from './nodes';
 import { useBoard } from '../hooks/useBoard';
 import { api } from '../api';
 import Toolbar from './Toolbar';
+import ContextMenu, { type ContextMenuProps } from './ContextMenu';
 
 interface CanvasViewProps {
   boardId: string;
@@ -36,7 +40,30 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuProps | null>(null);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const { fitView, screenToFlowPosition } = useReactFlow();
+
+  // Enhance nodes with editing state and callbacks via data
+  const enhancedNodes = useMemo(() => {
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        boardId,
+        isEditing: node.id === editingNodeId,
+        onStartEdit: () => setEditingNodeId(node.id),
+        onFinishEdit: async (newLabel: string) => {
+          setEditingNodeId(null);
+          if (newLabel !== node.data.label) {
+            await api.updateNode(boardId, node.id, { label: newLabel });
+            refetch();
+          }
+        },
+        onCancelEdit: () => setEditingNodeId(null),
+      },
+    }));
+  }, [nodes, editingNodeId, boardId, refetch]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -65,6 +92,105 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     [boardId, refetch, screenToFlowPosition],
   );
 
+  // Context menu handlers
+  const onNodeContextMenu: NodeMouseHandler = useCallback(
+    (event, node) => {
+      event.preventDefault();
+      const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
+      setContextMenu({
+        type: 'node',
+        position: { x: event.clientX, y: event.clientY },
+        nodeId: node.id,
+        nodeType: node.type ?? 'rectangle',
+        boardId,
+        selectedNodeIds: selectedIds.length > 0 ? selectedIds : [node.id],
+        onRefetch: refetch,
+        onClose: () => setContextMenu(null),
+        onStartEdit: (id: string) => setEditingNodeId(id),
+      });
+    },
+    [boardId, nodes, refetch],
+  );
+
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      setContextMenu({
+        type: 'edge',
+        position: { x: event.clientX, y: event.clientY },
+        edgeId: edge.id,
+        edgeSource: edge.source,
+        edgeTarget: edge.target,
+        boardId,
+        onRefetch: refetch,
+        onClose: () => setContextMenu(null),
+      });
+    },
+    [boardId, refetch],
+  );
+
+  const onPaneContextMenu = useCallback(
+    (event: React.MouseEvent | MouseEvent) => {
+      event.preventDefault();
+      const flowPos = screenToFlowPosition({
+        x: (event as MouseEvent).clientX,
+        y: (event as MouseEvent).clientY,
+      });
+      setContextMenu({
+        type: 'canvas',
+        position: { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY },
+        flowPosition: flowPos,
+        boardId,
+        snapEnabled: snapToGrid,
+        onRefetch: refetch,
+        onClose: () => setContextMenu(null),
+        onToggleSnap: () => setSnapToGrid((s) => !s),
+        onZoomToFit: () => fitView(),
+      });
+    },
+    [boardId, refetch, screenToFlowPosition, snapToGrid, fitView],
+  );
+
+  // Double-click on canvas creates sticky note
+  const onPaneDoubleClick = useCallback(
+    async (event: React.MouseEvent) => {
+      const flowPos = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      await api.createNode(boardId, {
+        type: 'sticky',
+        label: 'New Note',
+        x: flowPos.x,
+        y: flowPos.y,
+      });
+      refetch();
+    },
+    [boardId, refetch, screenToFlowPosition],
+  );
+
+  // Double-click on node starts editing
+  const onNodeDoubleClick: NodeMouseHandler = useCallback(
+    (_event, node) => {
+      setEditingNodeId(node.id);
+    },
+    [],
+  );
+
+  // Connection validation: reject self-loops and duplicate edges
+  const isValidConnection = useCallback(
+    (connection: Edge | Connection) => {
+      // Reject self-loops
+      if (connection.source === connection.target) return false;
+      // Reject duplicate edges
+      const isDuplicate = edges.some(
+        (e) => e.source === connection.source && e.target === connection.target,
+      );
+      return !isDuplicate;
+    },
+    [edges],
+  );
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
@@ -88,12 +214,12 @@ function CanvasInner({ boardId }: CanvasViewProps) {
       />
       <div style={{ flex: 1, position: 'relative' }}>
         <ReactFlow
-          nodes={nodes}
+          nodes={enhancedNodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          nodeTypes={nodeTypes}
+          nodeTypes={baseNodeTypes}
           selectionMode={SelectionMode.Partial}
           multiSelectionKeyCode="Shift"
           snapToGrid={snapToGrid}
@@ -101,6 +227,12 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onInit={setReactFlowInstance}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          onNodeContextMenu={onNodeContextMenu}
+          onEdgeContextMenu={onEdgeContextMenu}
+          onPaneContextMenu={onPaneContextMenu}
+          onDoubleClick={onPaneDoubleClick}
+          onNodeDoubleClick={onNodeDoubleClick}
+          isValidConnection={isValidConnection}
           fitView
         >
           <MiniMap />
@@ -119,9 +251,10 @@ function CanvasInner({ boardId }: CanvasViewProps) {
               pointerEvents: 'none',
             }}
           >
-            Drag a shape from the toolbar to get started.
+            Drag a shape from the toolbar or double-click to add a sticky note.
           </div>
         )}
+        {contextMenu && <ContextMenu {...contextMenu} />}
       </div>
     </div>
   );
