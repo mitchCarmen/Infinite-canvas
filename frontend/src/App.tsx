@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BoardList from './components/BoardList';
+import CanvasView from './components/CanvasView';
 
 function parseHash(): { route: string; boardId?: string } {
   const hash = window.location.hash.replace(/^#\/?/, '');
@@ -20,12 +21,7 @@ export default function App() {
   }, []);
 
   if (routeState.route === 'board' && routeState.boardId) {
-    return (
-      <div className="canvas-placeholder">
-        <a href="#/" className="back-link">Back to boards</a>
-        <p>Canvas for board {routeState.boardId}</p>
-      </div>
-    );
+    return <CanvasView boardId={routeState.boardId} />;
   }
 
   return <BoardList />;

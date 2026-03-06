@@ -1,0 +1,43 @@
+import React from 'react';
+import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
+
+export default function CircleNode({ data, selected }: NodeProps) {
+  const w = (data.width as number) ?? 100;
+  const h = (data.height as number) ?? 100;
+  const diameter = Math.min(w, h);
+  const r = diameter / 2 - 1;
+  const fill = (data.style as Record<string, string>)?.backgroundColor ?? '#ffffff';
+  const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#333333';
+  const color = (data.style as Record<string, string>)?.color ?? '#000000';
+  const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
+
+  return (
+    <div style={{ width: diameter, height: diameter, position: 'relative' }}>
+      <NodeResizer isVisible={!!selected} minWidth={40} minHeight={40} />
+      <svg width={diameter} height={diameter} viewBox={`0 0 ${diameter} ${diameter}`}>
+        <circle
+          cx={diameter / 2}
+          cy={diameter / 2}
+          r={r}
+          fill={fill}
+          stroke={borderColor}
+          strokeWidth={2}
+        />
+        <text
+          x={diameter / 2}
+          y={diameter / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={color}
+          fontSize={fontSize}
+        >
+          {data.label as string}
+        </text>
+      </svg>
+      <Handle type="target" position={Position.Top} />
+      <Handle type="source" position={Position.Bottom} />
+      <Handle type="target" position={Position.Left} id="left" />
+      <Handle type="source" position={Position.Right} id="right" />
+    </div>
+  );
+}
