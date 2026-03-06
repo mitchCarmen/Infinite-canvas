@@ -1,22 +1,27 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ReactFlow,
+  ReactFlowProvider,
   MiniMap,
   Controls,
   Background,
   BackgroundVariant,
   SelectionMode,
+  useReactFlow,
+  type ReactFlowInstance,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes } from './nodes';
 import { useBoard } from '../hooks/useBoard';
+import { api } from '../api';
+import Toolbar from './Toolbar';
 
 interface CanvasViewProps {
   boardId: string;
 }
 
-export default function CanvasView({ boardId }: CanvasViewProps) {
+function CanvasInner({ boardId }: CanvasViewProps) {
   const {
     nodes,
     edges,
@@ -25,7 +30,40 @@ export default function CanvasView({ boardId }: CanvasViewProps) {
     onEdgesChange,
     onConnect,
     loading,
+    refetch,
   } = useBoard(boardId);
+
+  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [activityLogOpen, setActivityLogOpen] = useState(false);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const { fitView, screenToFlowPosition } = useReactFlow();
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    async (event: React.DragEvent) => {
+      event.preventDefault();
+      const nodeType = event.dataTransfer.getData('application/reactflow-type');
+      if (!nodeType) return;
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      await api.createNode(boardId, {
+        type: nodeType,
+        label: nodeType,
+        x: position.x,
+        y: position.y,
+      });
+      refetch();
+    },
+    [boardId, refetch, screenToFlowPosition],
+  );
 
   if (loading) {
     return (
@@ -37,14 +75,18 @@ export default function CanvasView({ boardId }: CanvasViewProps) {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <a href="#/" style={{ textDecoration: 'none', color: '#555' }}>
-          &larr; Back to boards
-        </a>
-        {board && <span style={{ fontWeight: 600 }}>{board.name}</span>}
-      </div>
-      <div style={{ flex: 1 }}>
+    <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
+      <Toolbar
+        boardId={boardId}
+        boardName={board?.name ?? ''}
+        onRefetch={refetch}
+        onToggleSnap={() => setSnapToGrid((s) => !s)}
+        snapEnabled={snapToGrid}
+        onToggleActivityLog={() => setActivityLogOpen((o) => !o)}
+        onZoomToFit={() => fitView()}
+        reactFlowInstance={reactFlowInstance}
+      />
+      <div style={{ flex: 1, position: 'relative' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -54,6 +96,11 @@ export default function CanvasView({ boardId }: CanvasViewProps) {
           nodeTypes={nodeTypes}
           selectionMode={SelectionMode.Partial}
           multiSelectionKeyCode="Shift"
+          snapToGrid={snapToGrid}
+          snapGrid={[20, 20]}
+          onInit={setReactFlowInstance}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
           fitView
         >
           <MiniMap />
@@ -72,10 +119,18 @@ export default function CanvasView({ boardId }: CanvasViewProps) {
               pointerEvents: 'none',
             }}
           >
-            Empty board. Add nodes to get started.
+            Drag a shape from the toolbar to get started.
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function CanvasView({ boardId }: CanvasViewProps) {
+  return (
+    <ReactFlowProvider>
+      <CanvasInner boardId={boardId} />
+    </ReactFlowProvider>
   );
 }
