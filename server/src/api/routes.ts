@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { join } from 'path';
+import { v4 as uuid } from 'uuid';
 import { BoardStore } from '../data/boards.js';
 import { parseMermaid } from '../parsers/mermaid.js';
 
@@ -260,6 +263,41 @@ export function createApp(boardsDir: string) {
       next(err);
     }
   });
+
+  // --- Image upload ---
+
+  const assetsDir = join(boardsDir, 'assets');
+
+  app.post('/api/boards/:id/upload-image', async (req, res, next) => {
+    try {
+      const { imageData, filename } = req.body;
+      if (!imageData || !filename) {
+        res.status(400).json({ error: 'imageData and filename are required' });
+        return;
+      }
+
+      // Validate board exists
+      await store.readBoard(req.params.id);
+
+      if (!existsSync(assetsDir)) {
+        mkdirSync(assetsDir, { recursive: true });
+      }
+
+      const ext = filename.split('.').pop() || 'png';
+      const assetId = uuid();
+      const assetFilename = `${assetId}.${ext}`;
+      const buffer = Buffer.from(imageData, 'base64');
+      writeFileSync(join(assetsDir, assetFilename), buffer);
+
+      res.json({ url: `/api/assets/${assetFilename}` });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // --- Static assets ---
+
+  app.use('/api/assets', express.static(assetsDir));
 
   // --- Error handling middleware ---
 

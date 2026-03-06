@@ -86,4 +86,10 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then(r => r.json()),
+  uploadImage: (boardId: string, imageData: string, filename: string) =>
+    fetch(`${BASE}/boards/${boardId}/upload-image`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageData, filename }),
+    }).then(r => r.json()),
 };

@@ -57,6 +57,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuProps | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
+  const [imageDropActive, setImageDropActive] = useState(false);
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
 
   useViewportPersistence(boardId, reactFlowInstance);
@@ -160,12 +161,59 @@ function CanvasInner({ boardId }: CanvasViewProps) {
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    const hasImage = Array.from(event.dataTransfer.types).includes('Files');
+    if (hasImage) {
+      event.dataTransfer.dropEffect = 'copy';
+      setImageDropActive(true);
+    } else {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }, []);
+
+  const onDragLeave = useCallback((event: React.DragEvent) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+    setImageDropActive(false);
   }, []);
 
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
       event.preventDefault();
+      setImageDropActive(false);
+
+      // Check for image file drop first
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        const imageFile = Array.from(files).find((f) => f.type.startsWith('image/'));
+        if (imageFile) {
+          const position = screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const base64 = (reader.result as string).split(',')[1];
+            const ext = imageFile.name.split('.').pop() || 'png';
+            try {
+              const result = await api.uploadImage(boardId, base64, imageFile.name);
+              snapshot('add image via drag');
+              await api.createNode(boardId, {
+                type: 'image',
+                label: imageFile.name,
+                x: position.x,
+                y: position.y,
+                data: { imageUrl: result.url },
+              });
+              refetch();
+            } catch (err) {
+              console.error('Image upload failed:', err);
+            }
+          };
+          reader.readAsDataURL(imageFile);
+          return;
+        }
+      }
+
       const nodeType = event.dataTransfer.getData('application/reactflow-type');
       if (!nodeType) return;
 
@@ -312,7 +360,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         onZoomToFit={() => fitView()}
         reactFlowInstance={reactFlowInstance}
       />
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ flex: 1, position: 'relative' }} onDragLeave={onDragLeave}>
         <ReactFlow
           nodes={enhancedNodes}
           edges={edges}
@@ -344,6 +392,26 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           <Background variant={BackgroundVariant.Dots} />
         </ReactFlow>
         <AlignmentGuides enabled={isDraggingNode} />
+        {imageDropActive && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              border: '3px dashed #2196F3',
+              borderRadius: 8,
+              backgroundColor: 'rgba(33, 150, 243, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              zIndex: 998,
+            }}
+          >
+            <span style={{ color: '#2196F3', fontSize: 18, fontWeight: 500 }}>
+              Drop image here
+            </span>
+          </div>
+        )}
         {!loading && nodes.length === 0 && (
           <div
             style={{
