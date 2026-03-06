@@ -1,0 +1,8 @@
+.worktrees/
+node_modules/
+dist/
+boards/
+*.log
+.env
+.DS_Store
+frontend/build/
