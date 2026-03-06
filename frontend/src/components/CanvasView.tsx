@@ -17,6 +17,8 @@ import '@xyflow/react/dist/style.css';
 
 import { nodeTypes as baseNodeTypes } from './nodes';
 import { useBoard } from '../hooks/useBoard';
+import { useClipboard } from '../hooks/useClipboard';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
@@ -35,6 +37,12 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     onConnect,
     loading,
     refetch,
+    setNodes,
+    snapshot,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useBoard(boardId);
 
   const [snapToGrid, setSnapToGrid] = useState(false);
@@ -42,7 +50,69 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuProps | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-  const { fitView, screenToFlowPosition } = useReactFlow();
+  const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
+
+  const { copy, paste } = useClipboard(boardId, refetch);
+
+  // Keyboard shortcut handlers
+  const handleDelete = useCallback(async () => {
+    const selectedNodes = nodes.filter((n) => n.selected);
+    const selectedEdges = edges.filter((e) => e.selected);
+    if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
+
+    snapshot('delete selected');
+    for (const node of selectedNodes) {
+      await api.deleteNode(boardId, node.id);
+    }
+    for (const edge of selectedEdges) {
+      await api.deleteEdge(boardId, edge.id);
+    }
+    await refetch();
+  }, [nodes, edges, boardId, refetch, snapshot]);
+
+  const handleSelectAll = useCallback(() => {
+    setNodes((nds) => nds.map((n) => ({ ...n, selected: true })));
+  }, [setNodes]);
+
+  const handleCopy = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected);
+    copy(selectedNodes, edges);
+  }, [nodes, edges, copy]);
+
+  const handlePaste = useCallback(async () => {
+    snapshot('paste');
+    await paste();
+  }, [paste, snapshot]);
+
+  const handleGroup = useCallback(async () => {
+    const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
+    if (selectedIds.length < 2) return;
+    snapshot('group nodes');
+    await api.createGroup(boardId, 'Group', selectedIds);
+    await refetch();
+  }, [nodes, boardId, refetch, snapshot]);
+
+  const [searchBarOpen, setSearchBarOpen] = useState(false);
+
+  const shortcutHandlers = useMemo(
+    () => ({
+      onDelete: handleDelete,
+      onUndo: undo,
+      onRedo: redo,
+      onSelectAll: handleSelectAll,
+      onCopy: handleCopy,
+      onPaste: handlePaste,
+      onGroup: handleGroup,
+      onToggleSearch: () => setSearchBarOpen((s) => !s),
+      onToggleActivityLog: () => setActivityLogOpen((o) => !o),
+      onZoomToFit: () => fitView(),
+      onZoomIn: () => zoomIn(),
+      onZoomOut: () => zoomOut(),
+    }),
+    [handleDelete, undo, redo, handleSelectAll, handleCopy, handlePaste, handleGroup, fitView, zoomIn, zoomOut],
+  );
+
+  useKeyboardShortcuts(shortcutHandlers);
 
   // Enhance nodes with editing state and callbacks via data
   const enhancedNodes = useMemo(() => {
@@ -81,6 +151,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         y: event.clientY,
       });
 
+      snapshot('add node via drag');
       await api.createNode(boardId, {
         type: nodeType,
         label: nodeType,
@@ -89,7 +160,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
       });
       refetch();
     },
-    [boardId, refetch, screenToFlowPosition],
+    [boardId, refetch, screenToFlowPosition, snapshot],
   );
 
   // Context menu handlers
@@ -158,6 +229,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         x: event.clientX,
         y: event.clientY,
       });
+      snapshot('add sticky note');
       await api.createNode(boardId, {
         type: 'sticky',
         label: 'New Note',
@@ -166,7 +238,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
       });
       refetch();
     },
-    [boardId, refetch, screenToFlowPosition],
+    [boardId, refetch, screenToFlowPosition, snapshot],
   );
 
   // Double-click on node starts editing
