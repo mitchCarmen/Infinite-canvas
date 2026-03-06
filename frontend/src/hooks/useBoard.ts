@@ -9,6 +9,7 @@ import {
   type OnConnect,
   type NodeChange,
 } from '@xyflow/react';
+import { toPng } from 'html-to-image';
 import { api } from '../api';
 import type { Board, CanvasNode, CanvasEdge } from '@shared/types';
 import { useUndoRedo } from './useUndoRedo';
@@ -73,6 +74,7 @@ export function useBoard(boardId: string) {
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const thumbnailDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { takeSnapshot, undo: undoAction, redo: redoAction, canUndo, canRedo } = useUndoRedo();
 
   const fetchBoard = useCallback(async () => {
@@ -90,6 +92,27 @@ export function useBoard(boardId: string) {
   useEffect(() => {
     fetchBoard();
   }, [fetchBoard]);
+
+  // Generate board thumbnail debounced after node changes
+  const captureThumbnail = useCallback(() => {
+    if (thumbnailDebounceRef.current) clearTimeout(thumbnailDebounceRef.current);
+    thumbnailDebounceRef.current = setTimeout(() => {
+      const el = document.querySelector('.react-flow') as HTMLElement | null;
+      if (!el) return;
+      toPng(el, { width: 200, height: 150, canvasWidth: 200, canvasHeight: 150, cacheBust: true })
+        .then((dataUri) => {
+          api.updateBoardMetadata(boardId, { thumbnail: dataUri }).catch(console.error);
+        })
+        .catch(console.error);
+    }, 2000);
+  }, [boardId]);
+
+  // Trigger thumbnail after board loads with nodes
+  useEffect(() => {
+    if (!loading && nodes.length > 0) {
+      captureThumbnail();
+    }
+  }, [loading, nodes.length, captureThumbnail]);
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -112,6 +135,7 @@ export function useBoard(boardId: string) {
             return currentNodes;
           });
         }, 300);
+        captureThumbnail();
       }
     },
     [onNodesChangeBase, boardId, setNodes],

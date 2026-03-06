@@ -7,6 +7,7 @@ interface Board {
   description?: string;
   updatedAt: string;
   nodeCount?: number;
+  thumbnail?: string;
 }
 
 export default function BoardList() {
@@ -135,7 +136,17 @@ export default function BoardList() {
               className="board-card"
               onClick={() => navigateToBoard(board.id)}
             >
-              <div className="board-card-thumbnail" />
+              <div className="board-card-thumbnail">
+                {board.thumbnail ? (
+                  <img
+                    src={board.thumbnail}
+                    alt={board.name}
+                    className="board-card-thumbnail-img"
+                  />
+                ) : (
+                  <span className="board-card-thumbnail-placeholder">{board.name}</span>
+                )}
+              </div>
               <div className="board-card-info">
                 <h3>{board.name}</h3>
                 {board.description && (
