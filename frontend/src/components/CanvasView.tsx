@@ -22,6 +22,7 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
+import FloatingStyleBar from './FloatingStyleBar';
 
 interface CanvasViewProps {
   boardId: string;
@@ -263,6 +264,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     [edges],
   );
 
+  const selectedNodes = useMemo(() => nodes.filter((n) => n.selected), [nodes]);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
@@ -327,6 +330,13 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           </div>
         )}
         {contextMenu && <ContextMenu {...contextMenu} />}
+        {selectedNodes.length > 0 && (
+          <FloatingStyleBar
+            selectedNodes={selectedNodes}
+            boardId={boardId}
+            onRefetch={refetch}
+          />
+        )}
       </div>
     </div>
   );

@@ -511,3 +511,100 @@ body {
   justify-content: center;
   z-index: 10;
 }
+
+/* Floating Style Bar */
+
+.floating-style-bar {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  padding: 6px 8px;
+  user-select: none;
+}
+
+.style-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.style-bar-btn {
+  padding: 4px 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.style-bar-btn:hover {
+  border-color: var(--accent);
+}
+
+.style-bar-btn-active {
+  border-color: var(--accent);
+  background: var(--bg-card);
+  color: var(--accent);
+}
+
+.style-bar-btn-small {
+  padding: 3px 6px;
+  font-size: 0.7rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.style-bar-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.style-bar-group {
+  display: flex;
+  gap: 2px;
+}
+
+.style-bar-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 0 2px;
+  max-width: 200px;
+}
+
+.style-bar-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.style-bar-color-swatch:hover {
+  transform: scale(1.2);
+}
+
+.style-bar-hex-row {
+  width: 100%;
+  margin-top: 2px;
+}
+
+.style-bar-hex-input {
+  width: 100%;
+  padding: 3px 6px;
+  font-size: 0.75rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.style-bar-hex-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
