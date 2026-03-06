@@ -20,6 +20,7 @@ import { useBoard } from '../hooks/useBoard';
 import { useClipboard } from '../hooks/useClipboard';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSnapToGrid } from '../hooks/useSnapToGrid';
+import { useViewportPersistence } from '../hooks/useViewportPersistence';
 import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
@@ -57,6 +58,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
+
+  useViewportPersistence(boardId, reactFlowInstance);
 
   const { copy, paste } = useClipboard(boardId, refetch);
 
@@ -321,6 +324,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           multiSelectionKeyCode="Shift"
           snapToGrid={snapToGrid}
           snapGrid={snapGrid}
+          panActivationKeyCode="Space"
+          zoomOnPinch
           onInit={setReactFlowInstance}
           onDrop={onDrop}
           onDragOver={onDragOver}
