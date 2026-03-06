@@ -19,12 +19,14 @@ import { nodeTypes as baseNodeTypes } from './nodes';
 import { useBoard } from '../hooks/useBoard';
 import { useClipboard } from '../hooks/useClipboard';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useSnapToGrid } from '../hooks/useSnapToGrid';
 import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
 import FloatingStyleBar from './FloatingStyleBar';
 import SearchBar from './SearchBar';
 import ActivityLogDrawer from './ActivityLogDrawer';
+import AlignmentGuides from './AlignmentGuides';
 
 interface CanvasViewProps {
   boardId: string;
@@ -48,11 +50,12 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     canRedo,
   } = useBoard(boardId);
 
-  const [snapToGrid, setSnapToGrid] = useState(false);
+  const { snapToGrid, snapGrid, toggleSnap } = useSnapToGrid();
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuProps | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [isDraggingNode, setIsDraggingNode] = useState(false);
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
 
   const { copy, paste } = useClipboard(boardId, refetch);
@@ -232,11 +235,11 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         snapEnabled: snapToGrid,
         onRefetch: refetch,
         onClose: () => setContextMenu(null),
-        onToggleSnap: () => setSnapToGrid((s) => !s),
+        onToggleSnap: toggleSnap,
         onZoomToFit: () => fitView(),
       });
     },
-    [boardId, refetch, screenToFlowPosition, snapToGrid, fitView],
+    [boardId, refetch, screenToFlowPosition, snapToGrid, fitView, toggleSnap],
   );
 
   // Double-click on canvas creates sticky note
@@ -280,6 +283,9 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     [edges],
   );
 
+  const onNodeDragStart = useCallback(() => setIsDraggingNode(true), []);
+  const onNodeDragStop = useCallback(() => setIsDraggingNode(false), []);
+
   const selectedNodes = useMemo(() => nodes.filter((n) => n.selected), [nodes]);
 
   if (loading) {
@@ -297,7 +303,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         boardId={boardId}
         boardName={board?.name ?? ''}
         onRefetch={refetch}
-        onToggleSnap={() => setSnapToGrid((s) => !s)}
+        onToggleSnap={toggleSnap}
         snapEnabled={snapToGrid}
         onToggleActivityLog={() => setActivityLogOpen((o) => !o)}
         onZoomToFit={() => fitView()}
@@ -314,7 +320,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           selectionMode={SelectionMode.Partial}
           multiSelectionKeyCode="Shift"
           snapToGrid={snapToGrid}
-          snapGrid={[20, 20]}
+          snapGrid={snapGrid}
           onInit={setReactFlowInstance}
           onDrop={onDrop}
           onDragOver={onDragOver}
@@ -323,6 +329,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onPaneContextMenu={onPaneContextMenu}
           onDoubleClick={onPaneDoubleClick}
           onNodeDoubleClick={onNodeDoubleClick}
+          onNodeDragStart={onNodeDragStart}
+          onNodeDragStop={onNodeDragStop}
           isValidConnection={isValidConnection}
           fitView
         >
@@ -330,6 +338,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           <Controls />
           <Background variant={BackgroundVariant.Dots} />
         </ReactFlow>
+        <AlignmentGuides enabled={isDraggingNode} />
         {!loading && nodes.length === 0 && (
           <div
             style={{
