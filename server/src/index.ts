@@ -9,7 +9,7 @@ const app = createApp(boardsDir);
 
 // In production, serve frontend static files
 if (process.env.NODE_ENV === 'production') {
-  const frontendDist = path.join(__dirname, '../../frontend/dist');
+  const frontendDist = path.join(__dirname, '../../../../frontend/dist');
   app.use(express.static(frontendDist));
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {

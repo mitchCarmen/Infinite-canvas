@@ -6,3 +6,6 @@ boards/
 .env
 .DS_Store
 frontend/build/
+shared/*.js
+shared/*.d.ts
+shared/*.js.map
