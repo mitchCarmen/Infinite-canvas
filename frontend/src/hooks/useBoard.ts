@@ -11,6 +11,7 @@ import {
 } from '@xyflow/react';
 import { api } from '../api';
 import type { Board, CanvasNode, CanvasEdge } from '@shared/types';
+import { useUndoRedo } from './useUndoRedo';
 
 function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
   return canvasNodes.map((n) => {
@@ -53,6 +54,7 @@ export function useBoard(boardId: string) {
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { takeSnapshot, undo: undoAction, redo: redoAction, canUndo, canRedo } = useUndoRedo();
 
   const fetchBoard = useCallback(async () => {
     setLoading(true);
@@ -120,6 +122,36 @@ export function useBoard(boardId: string) {
     [boardId, setEdges],
   );
 
+  const snapshot = useCallback(
+    (description: string) => {
+      takeSnapshot(nodes, edges, description);
+    },
+    [nodes, edges, takeSnapshot],
+  );
+
+  const restore = useCallback(
+    (restoredNodes: Node[], restoredEdges: Edge[]) => {
+      setNodes(restoredNodes);
+      setEdges(restoredEdges);
+      // Sync restored state to backend
+      const nodeUpdates = restoredNodes.map((n) => ({
+        id: n.id,
+        x: n.position.x,
+        y: n.position.y,
+      }));
+      api.bulkUpdateNodes(boardId, nodeUpdates).catch(console.error);
+    },
+    [boardId, setNodes, setEdges],
+  );
+
+  const undo = useCallback(() => {
+    undoAction(nodes, edges, restore);
+  }, [undoAction, nodes, edges, restore]);
+
+  const redo = useCallback(() => {
+    redoAction(restore);
+  }, [redoAction, restore]);
+
   return {
     nodes,
     edges,
@@ -129,5 +161,12 @@ export function useBoard(boardId: string) {
     onConnect,
     loading,
     refetch: fetchBoard,
+    setNodes,
+    setEdges,
+    snapshot,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   };
 }
