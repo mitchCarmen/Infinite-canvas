@@ -70,12 +70,13 @@ describe('BoardStore', () => {
   describe('duplicateBoard', () => {
     it('duplicates a board with a new name', async () => {
       const original = await store.createBoard('Original', 'user');
-      await store.createNode(original.id, { type: 'rectangle', label: 'Node 1' }, 'user');
+      const withNode = await store.createNode(original.id, { type: 'rectangle', label: 'Node 1' }, 'user');
+      const originalNodeId = withNode.nodes[0].id;
       const dupe = await store.duplicateBoard(original.id, 'user', 'Copy');
       expect(dupe.name).toBe('Copy');
       expect(dupe.nodes).toHaveLength(1);
       expect(dupe.id).not.toBe(original.id);
-      expect(dupe.nodes[0].id).not.toBe(original.nodes[0]?.id);
+      expect(dupe.nodes[0].id).not.toBe(originalNodeId);
     });
   });
 
