@@ -11,6 +11,7 @@ import type {
 } from '../../../shared/types.js';
 import { DEFAULT_NODE_DIMENSIONS } from '../../../shared/types.js';
 import { createActivity } from './activity.js';
+import { autoLayout } from './layout.js';
 
 interface CreateNodeOpts {
   type: NodeType;
@@ -408,6 +409,24 @@ export class BoardStore {
 
     board.updatedAt = new Date().toISOString();
     board.activityLog.push(createActivity(actor, 'created_group', `Created group "${label}" with ${children.length} nodes`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  // --- Auto-layout ---
+
+  async autoLayoutBoard(
+    boardId: string,
+    direction: 'TB' | 'LR' | 'BT' | 'RL',
+    actor: 'user' | 'claude',
+  ): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    board.nodes = autoLayout(board.nodes, board.edges, direction);
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(
+      createActivity(actor, 'auto_layout', `Applied auto-layout (${direction})`),
+    );
     this._writeBoardFile(board);
     this._updateIndex(board);
     return board;
