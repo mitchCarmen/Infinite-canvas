@@ -83,7 +83,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
       label: z.string(),
       x: z.number().optional(),
       y: z.number().optional(),
-      style: z.record(z.string()).optional(),
+      style: z.record(z.string(), z.string()).optional(),
     },
     (args) => wrapHandler('create_node')(args),
   );
@@ -100,7 +100,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
       y: z.number().optional(),
       width: z.number().optional(),
       height: z.number().optional(),
-      style: z.record(z.string()).optional(),
+      style: z.record(z.string(), z.string()).optional(),
     },
     (args) => wrapHandler('update_node')(args),
   );
