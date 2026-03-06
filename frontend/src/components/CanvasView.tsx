@@ -21,6 +21,7 @@ import { useClipboard } from '../hooks/useClipboard';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSnapToGrid } from '../hooks/useSnapToGrid';
 import { useViewportPersistence } from '../hooks/useViewportPersistence';
+import { useExport } from '../hooks/useExport';
 import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
@@ -52,6 +53,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   } = useBoard(boardId);
 
   const { snapToGrid, snapGrid, toggleSnap } = useSnapToGrid();
+  const { exportPng, exportSvg } = useExport();
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuProps | null>(null);
@@ -359,8 +362,10 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         onToggleActivityLog={() => setActivityLogOpen((o) => !o)}
         onZoomToFit={() => fitView()}
         reactFlowInstance={reactFlowInstance}
+        onExportPng={() => exportPng(canvasWrapperRef.current)}
+        onExportSvg={() => exportSvg(canvasWrapperRef.current)}
       />
-      <div style={{ flex: 1, position: 'relative' }} onDragLeave={onDragLeave}>
+      <div ref={canvasWrapperRef} style={{ flex: 1, position: 'relative' }} onDragLeave={onDragLeave}>
         <ReactFlow
           nodes={enhancedNodes}
           edges={edges}

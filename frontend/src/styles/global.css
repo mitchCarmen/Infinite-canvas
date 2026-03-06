@@ -758,3 +758,14 @@ body {
   color: var(--text-primary);
   line-height: 1.4;
 }
+
+/* Export: hide UI elements during capture */
+
+.export-hide-ui .react-flow__minimap,
+.export-hide-ui .react-flow__controls,
+.export-hide-ui .toolbar,
+.export-hide-ui .floating-style-bar,
+.export-hide-ui .search-bar,
+.export-hide-ui .activity-log-drawer {
+  display: none !important;
+}

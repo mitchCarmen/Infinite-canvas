@@ -13,6 +13,8 @@ interface ToolbarProps {
   onToggleActivityLog: () => void;
   onZoomToFit: () => void;
   reactFlowInstance: ReactFlowInstance | null;
+  onExportPng?: () => void;
+  onExportSvg?: () => void;
 }
 
 const SHAPE_TYPES: { type: NodeType; label: string }[] = [
@@ -118,6 +120,8 @@ export default function Toolbar({
   onToggleActivityLog,
   onZoomToFit,
   reactFlowInstance,
+  onExportPng,
+  onExportSvg,
 }: ToolbarProps) {
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(boardName);
@@ -191,7 +195,11 @@ export default function Toolbar({
 
   const handleExport = (format: string) => {
     setExportDropdownOpen(false);
-    console.log(`Export ${format} — placeholder`);
+    if (format === 'PNG' && onExportPng) {
+      onExportPng();
+    } else if (format === 'SVG' && onExportSvg) {
+      onExportSvg();
+    }
   };
 
   return (
