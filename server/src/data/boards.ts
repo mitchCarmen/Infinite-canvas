@@ -1,0 +1,427 @@
+import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, renameSync } from 'fs';
+import { join } from 'path';
+import { v4 as uuid } from 'uuid';
+import type {
+  Board,
+  BoardIndex,
+  CanvasNode,
+  CanvasEdge,
+  NodeType,
+  ReorderAction,
+} from '../../../shared/types.js';
+import { DEFAULT_NODE_DIMENSIONS } from '../../../shared/types.js';
+import { createActivity } from './activity.js';
+
+interface CreateNodeOpts {
+  type: NodeType;
+  label: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  style?: Record<string, string>;
+  data?: Record<string, unknown>;
+}
+
+interface UpdateNodeOpts {
+  label?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  style?: Record<string, string>;
+  data?: Record<string, unknown>;
+}
+
+export class BoardStore {
+  private readonly boardsDir: string;
+  private readonly indexPath: string;
+
+  constructor(baseDir: string) {
+    this.boardsDir = join(baseDir, 'boards');
+    this.indexPath = join(baseDir, 'index.json');
+    if (!existsSync(this.boardsDir)) {
+      mkdirSync(this.boardsDir, { recursive: true });
+    }
+  }
+
+  // --- Index management ---
+
+  private _readIndex(): BoardIndex[] {
+    if (!existsSync(this.indexPath)) return [];
+    const raw = readFileSync(this.indexPath, 'utf-8');
+    return JSON.parse(raw) as BoardIndex[];
+  }
+
+  private _writeIndex(entries: BoardIndex[]): void {
+    const tmp = this.indexPath + '.tmp';
+    writeFileSync(tmp, JSON.stringify(entries, null, 2), 'utf-8');
+    renameSync(tmp, this.indexPath);
+  }
+
+  // --- Board file I/O ---
+
+  private _boardPath(id: string): string {
+    return join(this.boardsDir, `${id}.json`);
+  }
+
+  private _readBoardFile(id: string): Board {
+    const p = this._boardPath(id);
+    if (!existsSync(p)) throw new Error('Board not found');
+    const raw = readFileSync(p, 'utf-8');
+    return JSON.parse(raw) as Board;
+  }
+
+  private _writeBoardFile(board: Board): void {
+    const p = this._boardPath(board.id);
+    const tmp = p + '.tmp';
+    writeFileSync(tmp, JSON.stringify(board, null, 2), 'utf-8');
+    renameSync(tmp, p);
+  }
+
+  // --- Board CRUD ---
+
+  async createBoard(name: string, actor: 'user' | 'claude', description?: string): Promise<Board> {
+    const now = new Date().toISOString();
+    const board: Board = {
+      id: uuid(),
+      name,
+      description,
+      nodes: [],
+      edges: [],
+      activityLog: [createActivity(actor, 'created_board', `Created board "${name}"`)],
+      createdAt: now,
+      updatedAt: now,
+    };
+    this._writeBoardFile(board);
+
+    const index = this._readIndex();
+    index.push({ id: board.id, name: board.name, updatedAt: board.updatedAt });
+    this._writeIndex(index);
+
+    return board;
+  }
+
+  async listBoards(): Promise<BoardIndex[]> {
+    return this._readIndex();
+  }
+
+  async readBoard(boardId: string): Promise<Board> {
+    return this._readBoardFile(boardId);
+  }
+
+  async deleteBoard(boardId: string): Promise<void> {
+    const p = this._boardPath(boardId);
+    if (!existsSync(p)) throw new Error('Board not found');
+    unlinkSync(p);
+
+    const index = this._readIndex().filter(e => e.id !== boardId);
+    this._writeIndex(index);
+  }
+
+  async duplicateBoard(boardId: string, actor: 'user' | 'claude', newName?: string): Promise<Board> {
+    const original = this._readBoardFile(boardId);
+    const now = new Date().toISOString();
+    const newId = uuid();
+
+    // Build a map from old node IDs to new node IDs
+    const nodeIdMap = new Map<string, string>();
+    for (const node of original.nodes) {
+      nodeIdMap.set(node.id, uuid());
+    }
+
+    const newNodes: CanvasNode[] = original.nodes.map(n => ({
+      ...n,
+      id: nodeIdMap.get(n.id)!,
+      parentId: n.parentId ? nodeIdMap.get(n.parentId) : undefined,
+    }));
+
+    const newEdges: CanvasEdge[] = original.edges.map(e => ({
+      ...e,
+      id: uuid(),
+      source: nodeIdMap.get(e.source)!,
+      target: nodeIdMap.get(e.target)!,
+    }));
+
+    const dupName = newName ?? `${original.name} (copy)`;
+    const board: Board = {
+      id: newId,
+      name: dupName,
+      description: original.description,
+      nodes: newNodes,
+      edges: newEdges,
+      activityLog: [createActivity(actor, 'duplicated_board', `Duplicated board from "${original.name}"`)],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this._writeBoardFile(board);
+    const index = this._readIndex();
+    index.push({ id: board.id, name: board.name, updatedAt: board.updatedAt });
+    this._writeIndex(index);
+
+    return board;
+  }
+
+  // --- Node operations ---
+
+  async createNode(boardId: string, opts: CreateNodeOpts, actor: 'user' | 'claude'): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    const dims = DEFAULT_NODE_DIMENSIONS[opts.type];
+    const maxZ = board.nodes.length > 0 ? Math.max(...board.nodes.map(n => n.zIndex)) : 0;
+
+    const node: CanvasNode = {
+      id: uuid(),
+      type: opts.type,
+      label: opts.label,
+      x: opts.x ?? 0,
+      y: opts.y ?? 0,
+      width: opts.width ?? dims.width,
+      height: opts.height ?? dims.height,
+      zIndex: maxZ + 1,
+      style: opts.style,
+      data: opts.data,
+    };
+
+    board.nodes.push(node);
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'created_node', `Created node "${opts.label}"`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  async updateNode(boardId: string, nodeId: string, updates: UpdateNodeOpts, actor: 'user' | 'claude'): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    const idx = board.nodes.findIndex(n => n.id === nodeId);
+    if (idx === -1) throw new Error('Node not found');
+
+    const node = board.nodes[idx];
+    if (updates.label !== undefined) node.label = updates.label;
+    if (updates.x !== undefined) node.x = updates.x;
+    if (updates.y !== undefined) node.y = updates.y;
+    if (updates.width !== undefined) node.width = updates.width;
+    if (updates.height !== undefined) node.height = updates.height;
+    if (updates.style !== undefined) node.style = updates.style;
+    if (updates.data !== undefined) node.data = updates.data;
+
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'updated_node', `Updated node "${node.label}"`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  async bulkUpdateNodes(
+    boardId: string,
+    updates: Array<{ nodeId: string } & UpdateNodeOpts>,
+    actor: 'user' | 'claude',
+  ): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+
+    for (const update of updates) {
+      const idx = board.nodes.findIndex(n => n.id === update.nodeId);
+      if (idx === -1) throw new Error(`Node not found: ${update.nodeId}`);
+
+      const node = board.nodes[idx];
+      if (update.label !== undefined) node.label = update.label;
+      if (update.x !== undefined) node.x = update.x;
+      if (update.y !== undefined) node.y = update.y;
+      if (update.width !== undefined) node.width = update.width;
+      if (update.height !== undefined) node.height = update.height;
+      if (update.style !== undefined) node.style = update.style;
+      if (update.data !== undefined) node.data = update.data;
+    }
+
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'bulk_updated_nodes', `Bulk updated ${updates.length} nodes`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  async deleteNode(boardId: string, nodeId: string, actor: 'user' | 'claude'): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    const idx = board.nodes.findIndex(n => n.id === nodeId);
+    if (idx === -1) throw new Error('Node not found');
+
+    const label = board.nodes[idx].label;
+
+    // Remove the node
+    board.nodes.splice(idx, 1);
+
+    // Cascade: remove all edges connected to this node
+    board.edges = board.edges.filter(e => e.source !== nodeId && e.target !== nodeId);
+
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'deleted_node', `Deleted node "${label}"`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  // --- Edge operations ---
+
+  async createEdge(
+    boardId: string,
+    source: string,
+    target: string,
+    actor: 'user' | 'claude',
+    label?: string,
+    style?: Record<string, string>,
+  ): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+
+    // Validate
+    if (source === target) throw new Error('Self-loops not allowed');
+
+    const sourceNode = board.nodes.find(n => n.id === source);
+    const targetNode = board.nodes.find(n => n.id === target);
+    if (!sourceNode) throw new Error('Source node not found');
+    if (!targetNode) throw new Error('Target node not found');
+    if (targetNode.type === 'group') throw new Error('Cannot target a group node');
+
+    const duplicate = board.edges.find(e => e.source === source && e.target === target);
+    if (duplicate) throw new Error('Duplicate edge');
+
+    const edge: CanvasEdge = {
+      id: uuid(),
+      source,
+      target,
+      label,
+      style,
+    };
+
+    board.edges.push(edge);
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'created_edge', `Connected "${sourceNode.label}" to "${targetNode.label}"`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  async deleteEdge(boardId: string, edgeId: string, actor: 'user' | 'claude'): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    const idx = board.edges.findIndex(e => e.id === edgeId);
+    if (idx === -1) throw new Error('Edge not found');
+
+    board.edges.splice(idx, 1);
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'deleted_edge', `Deleted edge`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  // --- Reorder ---
+
+  async reorderNode(boardId: string, nodeId: string, action: ReorderAction, actor: 'user' | 'claude'): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    const node = board.nodes.find(n => n.id === nodeId);
+    if (!node) throw new Error('Node not found');
+
+    const zValues = board.nodes.map(n => n.zIndex);
+    const maxZ = Math.max(...zValues);
+    const minZ = Math.min(...zValues);
+
+    switch (action) {
+      case 'bring_to_front':
+        node.zIndex = maxZ + 1;
+        break;
+      case 'send_to_back':
+        node.zIndex = minZ - 1;
+        break;
+      case 'bring_forward': {
+        // Find next higher zIndex
+        const higher = zValues.filter(z => z > node.zIndex).sort((a, b) => a - b);
+        if (higher.length > 0) {
+          const swapTarget = board.nodes.find(n => n.zIndex === higher[0] && n.id !== nodeId);
+          if (swapTarget) {
+            const tmp = node.zIndex;
+            node.zIndex = swapTarget.zIndex;
+            swapTarget.zIndex = tmp;
+          }
+        }
+        break;
+      }
+      case 'send_backward': {
+        // Find next lower zIndex
+        const lower = zValues.filter(z => z < node.zIndex).sort((a, b) => b - a);
+        if (lower.length > 0) {
+          const swapTarget = board.nodes.find(n => n.zIndex === lower[0] && n.id !== nodeId);
+          if (swapTarget) {
+            const tmp = node.zIndex;
+            node.zIndex = swapTarget.zIndex;
+            swapTarget.zIndex = tmp;
+          }
+        }
+        break;
+      }
+    }
+
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'reordered_node', `Reordered node "${node.label}" (${action})`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  // --- Groups ---
+
+  async createGroup(
+    boardId: string,
+    label: string,
+    nodeIds: string[],
+    actor: 'user' | 'claude',
+  ): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+
+    const children = board.nodes.filter(n => nodeIds.includes(n.id));
+    if (children.length === 0) throw new Error('No valid nodes for group');
+
+    // Compute bounding box with padding
+    const padding = 40;
+    const minX = Math.min(...children.map(n => n.x)) - padding;
+    const minY = Math.min(...children.map(n => n.y)) - padding;
+    const maxX = Math.max(...children.map(n => n.x + n.width)) + padding;
+    const maxY = Math.max(...children.map(n => n.y + n.height)) + padding;
+
+    const minZ = Math.min(...board.nodes.map(n => n.zIndex));
+
+    const groupNode: CanvasNode = {
+      id: uuid(),
+      type: 'group',
+      label,
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+      zIndex: minZ - 1, // Group goes behind children
+    };
+
+    board.nodes.push(groupNode);
+
+    // Set parentId on children
+    for (const child of children) {
+      child.parentId = groupNode.id;
+    }
+
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(createActivity(actor, 'created_group', `Created group "${label}" with ${children.length} nodes`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  // --- Helpers ---
+
+  private _updateIndex(board: Board): void {
+    const index = this._readIndex();
+    const entry = index.find(e => e.id === board.id);
+    if (entry) {
+      entry.name = board.name;
+      entry.updatedAt = board.updatedAt;
+    }
+    this._writeIndex(index);
+  }
+}
