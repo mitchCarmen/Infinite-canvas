@@ -390,6 +390,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           snapToGrid={snapToGrid}
           snapGrid={snapGrid}
           panActivationKeyCode="Space"
+          minZoom={0.1}
           zoomOnPinch
           onInit={(instance) => {
             setReactFlowInstance(instance as unknown as ReactFlowInstance);
@@ -412,7 +413,13 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onNodeClick={() => setContextMenu(null)}
           onEdgeClick={() => setContextMenu(null)}
         >
-          <MiniMap />
+          <MiniMap
+            pannable
+            zoomable
+            position="top-right"
+            maskColor={canvasLight ? 'rgba(240,240,240,0.7)' : 'rgba(30,30,36,0.7)'}
+            nodeColor={canvasLight ? '#555' : '#aaa'}
+          />
           <Controls />
           <Background variant={BackgroundVariant.Dots} color={canvasLight ? '#c0c0c0' : '#3a3a46'} />
         </ReactFlow>
