@@ -1,13 +1,15 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
+import { getContrastColor } from '../../utils/color';
 
 export default function EllipseNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 140;
   const height = (data.height as number) ?? 80;
   const fill = (data.style as Record<string, string>)?.backgroundColor ?? '#ffffff';
   const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#333333';
-  const color = (data.style as Record<string, string>)?.color ?? '#000000';
+  const explicitColor = (data.style as Record<string, string>)?.color;
+  const color = explicitColor ?? getContrastColor(fill);
   const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
