@@ -21,21 +21,17 @@ export function useViewportPersistence(
   // Restore viewport on mount (once instance is available)
   useEffect(() => {
     if (!reactFlowInstance || restoredRef.current) return;
+    restoredRef.current = true;
 
     const raw = localStorage.getItem(storageKey(boardId));
     if (raw) {
       try {
         const saved = JSON.parse(raw) as { x: number; y: number; zoom: number };
-        // Delay slightly to let initial fitView settle, then override
-        const t = setTimeout(() => {
-          reactFlowInstance.setViewport(saved);
-        }, 50);
-        return () => clearTimeout(t);
+        reactFlowInstance.setViewport(saved);
       } catch {
         // Corrupt data, ignore
       }
     }
-    restoredRef.current = true;
   }, [boardId, reactFlowInstance]);
 
   // Save viewport on changes (debounced)

@@ -76,9 +76,12 @@ export function useBoard(boardId: string) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const thumbnailDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { takeSnapshot, undo: undoAction, redo: redoAction, canUndo, canRedo } = useUndoRedo();
+  const initialLoadDone = useRef(false);
 
   const fetchBoard = useCallback(async () => {
-    setLoading(true);
+    if (!initialLoadDone.current) {
+      setLoading(true);
+    }
     try {
       const data: Board = await api.readBoard(boardId);
       setBoard(data);
@@ -86,10 +89,12 @@ export function useBoard(boardId: string) {
       setEdges(toFlowEdges(data.edges));
     } finally {
       setLoading(false);
+      initialLoadDone.current = true;
     }
   }, [boardId, setNodes, setEdges]);
 
   useEffect(() => {
+    initialLoadDone.current = false;
     fetchBoard();
   }, [fetchBoard]);
 

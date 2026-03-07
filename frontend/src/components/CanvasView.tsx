@@ -390,7 +390,10 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           snapGrid={snapGrid}
           panActivationKeyCode="Space"
           zoomOnPinch
-          onInit={setReactFlowInstance}
+          onInit={(instance) => {
+            setReactFlowInstance(instance);
+            instance.fitView();
+          }}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onNodeContextMenu={onNodeContextMenu}
@@ -407,7 +410,6 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onPaneClick={() => setContextMenu(null)}
           onNodeClick={() => setContextMenu(null)}
           onEdgeClick={() => setContextMenu(null)}
-          fitView
         >
           <MiniMap />
           <Controls />
