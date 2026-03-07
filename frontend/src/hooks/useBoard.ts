@@ -61,6 +61,8 @@ function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
       id: e.id,
       source: e.source,
       target: e.target,
+      ...(e.sourceHandle ? { sourceHandle: e.sourceHandle } : {}),
+      ...(e.targetHandle ? { targetHandle: e.targetHandle } : {}),
       label: e.label,
       ...(type ? { type } : {}),
       style: edgeStyle,
@@ -151,18 +153,25 @@ export function useBoard(boardId: string) {
   const onConnect: OnConnect = useCallback(
     (connection) => {
       if (connection.source && connection.target) {
+        const srcHandle = connection.sourceHandle ?? undefined;
+        const tgtHandle = connection.targetHandle ?? undefined;
+
+        // Optimistically add edge so it appears immediately
+        const tempId = `temp-${Date.now()}`;
+        const tempEdge: Edge = {
+          id: tempId,
+          source: connection.source,
+          target: connection.target,
+          ...(srcHandle ? { sourceHandle: srcHandle } : {}),
+          ...(tgtHandle ? { targetHandle: tgtHandle } : {}),
+        };
+        setEdges((eds) => [...eds, tempEdge]);
+
+        // Persist to server, then replace temp edge with server version
         api
-          .createEdge(boardId, connection.source, connection.target)
-          .then((newEdge: CanvasEdge) => {
-            setEdges((eds) => [
-              ...eds,
-              {
-                id: newEdge.id,
-                source: newEdge.source,
-                target: newEdge.target,
-                label: newEdge.label,
-              },
-            ]);
+          .createEdge(boardId, connection.source, connection.target, undefined, srcHandle, tgtHandle)
+          .then((board: Board) => {
+            setEdges(toFlowEdges(board.edges));
           })
           .catch(console.error);
       }

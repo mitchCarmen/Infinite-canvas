@@ -30,6 +30,8 @@ export interface CanvasEdge {
   id: string;
   source: string;
   target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
   label?: string;
   style?: Record<string, string>;
 }

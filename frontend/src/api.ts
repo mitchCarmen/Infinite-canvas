@@ -42,11 +42,11 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     }).then(r => r.json()),
-  createEdge: (boardId: string, source: string, target: string, label?: string) =>
+  createEdge: (boardId: string, source: string, target: string, label?: string, sourceHandle?: string, targetHandle?: string) =>
     fetch(`${BASE}/boards/${boardId}/edges`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source, target, label }),
+      body: JSON.stringify({ source, target, label, sourceHandle, targetHandle }),
     }).then(r => r.json()),
   updateEdge: (boardId: string, edgeId: string, data: any) =>
     fetch(`${BASE}/boards/${boardId}/edges/${edgeId}`, {

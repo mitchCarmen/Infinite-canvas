@@ -391,7 +391,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           panActivationKeyCode="Space"
           zoomOnPinch
           onInit={(instance) => {
-            setReactFlowInstance(instance);
+            setReactFlowInstance(instance as unknown as ReactFlowInstance);
             instance.fitView();
           }}
           onDrop={onDrop}

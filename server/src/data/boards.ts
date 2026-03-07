@@ -290,6 +290,8 @@ export class BoardStore {
     actor: 'user' | 'claude',
     label?: string,
     style?: Record<string, string>,
+    sourceHandle?: string,
+    targetHandle?: string,
   ): Promise<Board> {
     const board = this._readBoardFile(boardId);
 
@@ -309,6 +311,8 @@ export class BoardStore {
       id: uuid(),
       source,
       target,
+      ...(sourceHandle ? { sourceHandle } : {}),
+      ...(targetHandle ? { targetHandle } : {}),
       label,
       style,
     };

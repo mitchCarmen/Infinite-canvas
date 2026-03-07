@@ -145,12 +145,12 @@ export function createApp(boardsDir: string) {
 
   app.post('/api/boards/:id/edges', async (req, res, next) => {
     try {
-      const { source, target, label, style } = req.body;
+      const { source, target, label, style, sourceHandle, targetHandle } = req.body;
       if (!source || !target) {
         res.status(400).json({ error: 'source and target are required' });
         return;
       }
-      const board = await store.createEdge(req.params.id, source, target, 'user', label, style);
+      const board = await store.createEdge(req.params.id, source, target, 'user', label, style, sourceHandle, targetHandle);
       res.status(201).json(board);
     } catch (err) {
       next(err);
