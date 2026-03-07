@@ -73,6 +73,7 @@ export default function ContextMenu(props: ContextMenuProps) {
   const [layerSubmenuOpen, setLayerSubmenuOpen] = useState(false);
   const [addNodeSubmenuOpen, setAddNodeSubmenuOpen] = useState(false);
   const [routingSubmenuOpen, setRoutingSubmenuOpen] = useState(false);
+  const [arrowSubmenuOpen, setArrowSubmenuOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -225,6 +226,12 @@ export default function ContextMenu(props: ContextMenuProps) {
       onClose();
     };
 
+    const handleSetArrowMode = async (arrowMode: string) => {
+      await api.updateEdge(boardId, edgeId, { style: { arrowMode } });
+      onRefetch();
+      onClose();
+    };
+
     const handleDelete = async () => {
       await api.deleteEdge(boardId, edgeId);
       onRefetch();
@@ -237,6 +244,13 @@ export default function ContextMenu(props: ContextMenuProps) {
       { value: 'step', label: 'Step' },
     ];
 
+    const ARROW_OPTIONS = [
+      { value: 'forward', label: 'Forward →' },
+      { value: 'reverse', label: 'Reverse ←' },
+      { value: 'both', label: 'Both ↔' },
+      { value: 'none', label: 'None —' },
+    ];
+
     return (
       <div ref={menuRef} className="context-menu" style={menuStyle}>
         <button className="context-menu-item" onClick={handleEditLabel}>
@@ -244,7 +258,7 @@ export default function ContextMenu(props: ContextMenuProps) {
         </button>
         <div
           className="context-menu-item context-menu-submenu-trigger"
-          onMouseEnter={() => setRoutingSubmenuOpen(true)}
+          onMouseEnter={() => { setRoutingSubmenuOpen(true); setArrowSubmenuOpen(false); }}
           onMouseLeave={() => setRoutingSubmenuOpen(false)}
         >
           Routing &#9656;
@@ -255,6 +269,26 @@ export default function ContextMenu(props: ContextMenuProps) {
                   key={value}
                   className="context-menu-item"
                   onClick={() => handleSetRouting(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div
+          className="context-menu-item context-menu-submenu-trigger"
+          onMouseEnter={() => { setArrowSubmenuOpen(true); setRoutingSubmenuOpen(false); }}
+          onMouseLeave={() => setArrowSubmenuOpen(false)}
+        >
+          Arrows &#9656;
+          {arrowSubmenuOpen && (
+            <div className="context-menu context-submenu">
+              {ARROW_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  className="context-menu-item"
+                  onClick={() => handleSetArrowMode(value)}
                 >
                   {label}
                 </button>

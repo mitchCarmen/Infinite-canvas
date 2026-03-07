@@ -337,7 +337,7 @@ export class BoardStore {
 
     const edge = board.edges[idx];
     if (updates.label !== undefined) edge.label = updates.label;
-    if (updates.style !== undefined) edge.style = updates.style;
+    if (updates.style !== undefined) edge.style = { ...(edge.style ?? {}), ...updates.style };
 
     board.updatedAt = new Date().toISOString();
     board.activityLog.push(createActivity(actor, 'updated_edge', `Updated edge`));

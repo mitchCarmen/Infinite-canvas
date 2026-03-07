@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   useNodesState,
   useEdgesState,
+  MarkerType,
   type Node,
   type Edge,
   type OnNodesChange,
@@ -52,11 +53,23 @@ function mapEdgeRouting(routing?: string): string | undefined {
   }
 }
 
+const ARROW_MARKER = { type: MarkerType.ArrowClosed, width: 20, height: 20 };
+
 function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
   return canvasEdges.map((e) => {
     const edgeStyle = e.style as Record<string, string> | undefined;
     const routing = edgeStyle?.routing;
+    const arrowMode = edgeStyle?.arrowMode ?? 'forward';
     const type = mapEdgeRouting(routing);
+
+    const markers: Pick<Edge, 'markerEnd' | 'markerStart'> = {};
+    if (arrowMode === 'forward' || arrowMode === 'both') {
+      markers.markerEnd = ARROW_MARKER;
+    }
+    if (arrowMode === 'reverse' || arrowMode === 'both') {
+      markers.markerStart = ARROW_MARKER;
+    }
+
     return {
       id: e.id,
       source: e.source,
@@ -65,6 +78,7 @@ function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
       ...(e.targetHandle ? { targetHandle: e.targetHandle } : {}),
       label: e.label,
       ...(type ? { type } : {}),
+      ...markers,
       style: edgeStyle,
     };
   });
@@ -164,6 +178,7 @@ export function useBoard(boardId: string) {
           target: connection.target,
           ...(srcHandle ? { sourceHandle: srcHandle } : {}),
           ...(tgtHandle ? { targetHandle: tgtHandle } : {}),
+          markerEnd: ARROW_MARKER,
         };
         setEdges((eds) => [...eds, tempEdge]);
 
