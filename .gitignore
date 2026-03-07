@@ -1,8 +1,10 @@
 .worktrees/
+.playwright-mcp/
 node_modules/
 dist/
 boards/*
 !boards/examples/
+server/boards/
 *.log
 .env
 .DS_Store
