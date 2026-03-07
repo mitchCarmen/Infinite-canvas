@@ -48,7 +48,7 @@ export default function GroupNode({ data, selected }: NodeProps) {
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            style={{ fontSize, color, fontWeight: 600, textAlign: 'left', width: 'auto', minWidth: 80 }}
+            style={{ fontSize, fontWeight: 600, textAlign: 'left', width: 'auto', minWidth: 80 }}
           />
         </div>
       )}

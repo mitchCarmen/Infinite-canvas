@@ -4,13 +4,13 @@ import { api } from '../api';
 
 const COLOR_PALETTE = [
   '#ffffff',
-  '#ff6b6b',
-  '#ffd93d',
-  '#4ecca3',
-  '#3b82f6',
-  '#8b5cf6',
-  '#ec4899',
-  '#1a1a2e',
+  '#e88a8a',
+  '#e4c55a',
+  '#5bc4a0',
+  '#5b8def',
+  '#9b7de8',
+  '#d97bac',
+  '#2e2e38',
 ];
 
 const BORDER_WIDTHS = [1, 2, 3, 4];

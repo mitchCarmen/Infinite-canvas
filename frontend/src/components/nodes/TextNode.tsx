@@ -31,7 +31,7 @@ export default function TextNode({ data, selected }: NodeProps) {
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          style={{ fontSize, color }}
+          style={{ fontSize }}
         />
       ) : (
         label

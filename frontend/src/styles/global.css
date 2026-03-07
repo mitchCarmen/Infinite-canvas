@@ -1,15 +1,15 @@
 :root {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #0f3460;
-  --text-primary: #e6e6e6;
-  --text-secondary: #a0a0a0;
-  --accent: #e94560;
-  --accent-hover: #ff6b6b;
-  --border: #2a2a4a;
-  --success: #4ecca3;
-  --warning: #ffd93d;
-  --error: #ff6b6b;
+  --bg-primary: #1e1e24;
+  --bg-secondary: #26262e;
+  --bg-card: #2e2e38;
+  --text-primary: #d8d8db;
+  --text-secondary: #8e8e96;
+  --accent: #5b8def;
+  --accent-hover: #7aa4ff;
+  --border: #383842;
+  --success: #5bc4a0;
+  --warning: #e4c55a;
+  --error: #e06070;
 }
 
 * {
@@ -508,9 +508,9 @@ body {
 /* Inline Node Edit Input */
 
 .node-edit-input {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--accent);
+  background: #ffffff;
+  color: #1a1a1a;
+  border: 2px solid var(--accent);
   border-radius: 3px;
   font-size: inherit;
   text-align: center;

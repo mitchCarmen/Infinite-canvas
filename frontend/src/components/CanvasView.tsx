@@ -390,6 +390,10 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onNodeDragStart={onNodeDragStart}
           onNodeDragStop={onNodeDragStop}
           isValidConnection={isValidConnection}
+          deleteKeyCode={null}
+          onPaneClick={() => setContextMenu(null)}
+          onNodeClick={() => setContextMenu(null)}
+          onEdgeClick={() => setContextMenu(null)}
           fitView
         >
           <MiniMap />
