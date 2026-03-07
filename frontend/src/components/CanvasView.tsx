@@ -63,9 +63,20 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
   const [imageDropActive, setImageDropActive] = useState(false);
+  const [canvasLight, setCanvasLight] = useState(() => {
+    try { return localStorage.getItem('canvas-light') === 'true'; } catch { return true; }
+  });
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
 
   useViewportPersistence(boardId, reactFlowInstance);
+
+  const toggleCanvasLight = useCallback(() => {
+    setCanvasLight((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('canvas-light', String(next)); } catch {}
+      return next;
+    });
+  }, []);
 
   const { copy, paste } = useClipboard(boardId, refetch);
 
@@ -328,13 +339,10 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   // Connection validation: reject self-loops and duplicate edges
   const isValidConnection = useCallback(
     (connection: Edge | Connection) => {
-      // Reject self-loops
       if (connection.source === connection.target) return false;
-      // Reject duplicate edges
-      const isDuplicate = edges.some(
+      return !edges.some(
         (e) => e.source === connection.source && e.target === connection.target,
       );
-      return !isDuplicate;
     },
     [edges],
   );
@@ -365,8 +373,10 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         reactFlowInstance={reactFlowInstance}
         onExportPng={() => exportPng(canvasWrapperRef.current)}
         onExportSvg={() => exportSvg(canvasWrapperRef.current)}
+        canvasLight={canvasLight}
+        onToggleCanvasLight={toggleCanvasLight}
       />
-      <div ref={canvasWrapperRef} style={{ flex: 1, position: 'relative' }} onDragLeave={onDragLeave}>
+      <div ref={canvasWrapperRef} style={{ flex: 1, position: 'relative', background: canvasLight ? '#ffffff' : '#1e1e24' }} onDragLeave={onDragLeave}>
         <ReactFlow
           nodes={enhancedNodes}
           edges={edges}
@@ -390,7 +400,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onNodeDoubleClick={onNodeDoubleClick}
           onNodeDragStart={onNodeDragStart}
           onNodeDragStop={onNodeDragStop}
-          connectionMode={ConnectionMode.Loose}
+          connectionMode={ConnectionMode.Strict}
+          connectionRadius={40}
           isValidConnection={isValidConnection}
           deleteKeyCode={null}
           onPaneClick={() => setContextMenu(null)}
@@ -400,7 +411,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         >
           <MiniMap />
           <Controls />
-          <Background variant={BackgroundVariant.Dots} />
+          <Background variant={BackgroundVariant.Dots} color={canvasLight ? '#c0c0c0' : '#3a3a46'} />
         </ReactFlow>
         <AlignmentGuides enabled={isDraggingNode} />
         {imageDropActive && (

@@ -15,6 +15,8 @@ interface ToolbarProps {
   reactFlowInstance: ReactFlowInstance | null;
   onExportPng?: () => void;
   onExportSvg?: () => void;
+  canvasLight: boolean;
+  onToggleCanvasLight: () => void;
 }
 
 const SHAPE_TYPES: { type: NodeType; label: string }[] = [
@@ -122,6 +124,8 @@ export default function Toolbar({
   reactFlowInstance,
   onExportPng,
   onExportSvg,
+  canvasLight,
+  onToggleCanvasLight,
 }: ToolbarProps) {
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(boardName);
@@ -302,6 +306,16 @@ export default function Toolbar({
 
           <button className="btn btn-small" onClick={onZoomToFit}>
             Zoom to Fit
+          </button>
+        </div>
+
+        <div className="toolbar-section toolbar-bottom">
+          <button
+            className={`btn btn-small btn-canvas-mode ${canvasLight ? 'btn-active' : ''}`}
+            onClick={onToggleCanvasLight}
+            title="Toggle canvas light/dark mode"
+          >
+            {canvasLight ? '☀️ Light Canvas' : '🌙 Dark Canvas'}
           </button>
         </div>
       </div>

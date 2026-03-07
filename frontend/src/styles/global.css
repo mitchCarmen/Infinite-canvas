@@ -336,6 +336,16 @@ body {
   cursor: grabbing;
 }
 
+.toolbar-bottom {
+  margin-top: auto;
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+}
+
+.toolbar-bottom .btn-canvas-mode {
+  width: 100%;
+}
+
 .toolbar-actions {
   display: flex;
   flex-direction: column;
@@ -1015,8 +1025,8 @@ body {
 /* React Flow Handles — connection points on nodes */
 
 .react-flow__handle {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   background: var(--bg-secondary);
   border: 2px solid var(--border);
   border-radius: 50%;
@@ -1024,25 +1034,40 @@ body {
   transition: opacity 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
 }
 
-/* Show handles when hovering over a node or when connecting */
-.react-flow__node:hover .react-flow__handle,
+/* Invisible hit area around each handle for easier grabbing */
+.react-flow__handle::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+}
+
+/* Target handles are invisible — they sit under source handles and are found via connectionRadius */
+.react-flow__handle[data-handletype="target"] {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Show source handles subtly by default so users know they exist */
+.react-flow__node .react-flow__handle[data-handletype="source"] {
+  opacity: 0.3;
+}
+
+/* Full opacity when hovering the node or actively connecting */
+.react-flow__node:hover .react-flow__handle[data-handletype="source"],
 .react-flow__handle-connecting,
-.react-flow__handle-valid,
-.react-flow .connecting .react-flow__handle {
+.react-flow .connecting .react-flow__handle[data-handletype="source"] {
   opacity: 1;
 }
 
-.react-flow__handle:hover {
+.react-flow__handle[data-handletype="source"]:hover {
   opacity: 1;
   background: var(--accent);
   border-color: var(--accent);
   transform: scale(1.4);
-}
-
-/* Valid drop target during connection drag */
-.react-flow__handle-valid {
-  background: var(--success);
-  border-color: var(--success);
 }
 
 /* Connection line styling */
