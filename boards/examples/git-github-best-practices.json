@@ -36,11 +36,11 @@
     {
       "id": "bf89f9d1-19d3-443c-974f-5a786ee23513",
       "type": "sticky",
-      "label": "Files move through three states: modified → staged → committed. The working tree holds your actual files. The index (staging area) is a snapshot you are preparing. HEAD points to the last commit in the repository. This mental model underpins all of Git.",
+      "label": "Files move through three states: modified, staged, and committed. The working tree holds your actual files on disk — every edit you make lives here first. The staging area (also called the index) is a snapshot you are assembling for your next commit. You choose exactly which changes to include with \"git add\". HEAD points to the last commit on your current branch. When you run \"git commit\", the staged snapshot becomes a permanent record in the repository. \"git restore\" can pull files back from the staging area or from HEAD, discarding changes. This three-stage pipeline is the mental model that underpins all of Git — every other operation builds on it.",
       "x": 50,
       "y": 380,
-      "width": 380,
-      "height": 260,
+      "width": 420,
+      "height": 304,
       "zIndex": 3,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -150,11 +150,11 @@
     {
       "id": "9434a2b9-01d8-4007-a24c-d963b5f7302e",
       "type": "sticky",
-      "label": "A branch is just a pointer to a commit. Creating a branch does not copy code—it creates a new reference. HEAD tells Git which branch you are on. git switch moves HEAD between branches.",
+      "label": "A branch in Git is just a lightweight pointer to a commit — creating one does not copy any code. When you run \"git branch feature\", Git creates a new reference pointing to the current commit. HEAD is a special pointer that tells Git which branch you are currently on. When you run \"git switch feature\", HEAD moves to point at the feature branch. New commits advance whichever branch HEAD points to. Branches diverge when both branches receive new commits independently. This cheap branching model is what makes Git so powerful for parallel development.",
       "x": 2050,
       "y": 380,
-      "width": 380,
-      "height": 220,
+      "width": 420,
+      "height": 260,
       "zIndex": 11,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -305,11 +305,11 @@
     {
       "id": "56b23897-2104-4582-b6f6-e0d775abc119",
       "type": "sticky",
-      "label": "When the target branch has not diverged, Git simply moves the pointer forward. No merge commit is created—the history stays linear. This is the simplest merge and happens when you are the only one working.",
+      "label": "When the target branch (e.g., main) has not received any new commits since you branched off, Git can perform a fast-forward merge. Instead of creating a merge commit, Git simply moves the branch pointer forward to match the feature branch. The result is a perfectly linear history — it looks as if all the work happened directly on main. No merge commit is created because there is no divergence to reconcile. This is the simplest and cleanest type of merge.",
       "x": 4050,
       "y": 380,
-      "width": 380,
-      "height": 220,
+      "width": 420,
+      "height": 238,
       "zIndex": 22,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -446,11 +446,11 @@
     {
       "id": "ed9eeb10-4f5b-4943-9391-405c7735430d",
       "type": "sticky",
-      "label": "When both branches have new commits, Git performs a three-way merge using the common ancestor plus both branch tips. This creates a merge commit with two parents—the diamond shape where branches diverge and reconverge.",
+      "label": "When both branches have received new commits since they diverged, Git cannot simply move a pointer forward. Instead, it performs a three-way merge using three reference points: the common ancestor commit, the tip of the current branch, and the tip of the branch being merged. Git compares both branch tips against the common ancestor to determine what changed on each side. The result is a new merge commit with two parents — one from each branch. This creates the classic diamond shape in the commit history where branches diverge and reconverge. If both branches changed the same lines, Git raises a merge conflict for you to resolve manually.",
       "x": 6050,
       "y": 380,
-      "width": 380,
-      "height": 250,
+      "width": 420,
+      "height": 304,
       "zIndex": 32,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -617,11 +617,11 @@
     {
       "id": "5bd040d6-603a-42ce-9121-8cdffd0b9508",
       "type": "sticky",
-      "label": "The complete lifecycle of a feature branch: create it, do your work in isolated commits, merge back when done, then clean up. This is the bread and butter of Git workflow. The branch exists only as long as the feature is in progress.",
+      "label": "The complete lifecycle of a feature branch: create it from main, develop your feature in isolated commits, merge it back to main when complete, then delete the branch to clean up. Each commit on the feature branch is isolated — main does not see these changes until you merge. After merging, the feature branch pointer is no longer needed because its commits are now reachable from main. Deleting the branch only removes the pointer, not the commits. This cycle — branch, develop, merge, delete — is the bread and butter of Git workflow and repeats for every feature.",
       "x": 50,
       "y": 1950,
-      "width": 380,
-      "height": 260,
+      "width": 420,
+      "height": 282,
       "zIndex": 44,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -826,10 +826,10 @@
     {
       "id": "907dd999-422a-4ef8-bd30-aad6f9aba43c",
       "type": "sticky",
-      "label": "Branch isolation means features do not interfere with each other. Each feature branch sees only main plus its own changes. Merging happens sequentially—one feature integrates, then the next. This prevents half-finished features from breaking other work.",
+      "label": "Branch isolation means features do not interfere with each other. Each feature branch sees only main plus its own changes — Feature A cannot see Feature B's work and vice versa. Merging happens sequentially: one feature integrates first, then the next merges into the updated main. The second merge may require conflict resolution if both features touched the same files. This isolation is what makes Git branches so powerful — multiple developers (or one developer wearing multiple hats) can work on independent features without stepping on each other's toes.",
       "x": 3050,
       "y": 1950,
-      "width": 380,
+      "width": 420,
       "height": 260,
       "zIndex": 59,
       "style": {
@@ -1065,11 +1065,11 @@
     {
       "id": "a830a214-1111-42e6-907d-4a9092e5e068",
       "type": "sticky",
-      "label": "Remote and local repositories are independent copies that sync through push and pull. Clone creates the initial local copy. Push sends your commits upstream. Pull (fetch+merge) brings others work down. This two-way sync is key to collaboration.",
+      "label": "Remote and local repositories are independent copies of the same project that synchronize through push and pull. \"git clone\" creates the initial local copy by downloading the full repository history. \"git push\" sends your local commits upstream to the remote (typically called \"origin\"). \"git pull\" fetches new commits from the remote and merges them into your local branch. Under the hood, \"git pull\" is actually \"git fetch\" + \"git merge\". Your local \"main\" and \"origin/main\" are separate references — they only align after push or pull. This two-way sync model is the foundation of all Git collaboration.",
       "x": 50,
       "y": 3550,
-      "width": 380,
-      "height": 240,
+      "width": 420,
+      "height": 282,
       "zIndex": 76,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -1247,11 +1247,11 @@
     {
       "id": "2f68b367-a18f-4416-943f-e60824d01d4e",
       "type": "sticky",
-      "label": "Even solo developers benefit from PRs—they create a review checkpoint and documentation trail. Push your feature branch, open a PR on GitHub, review your own changes, merge, then sync locally. This builds good habits for team work.",
+      "label": "Even solo developers benefit from pull requests — they create a review checkpoint and a documentation trail. The flow: create a feature branch locally, push it to the remote with \"git push -u origin feature\", open a PR on GitHub, review your own diff, merge on GitHub, then sync locally with \"git pull\" and delete the branch. Self-review catches mistakes you missed while coding. The PR description documents why the change was made. GitHub's merge button handles the merge and optionally squashes or rebases. This builds good habits for when you eventually collaborate with others.",
       "x": 2050,
       "y": 3550,
-      "width": 380,
-      "height": 230,
+      "width": 420,
+      "height": 282,
       "zIndex": 89,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -1375,11 +1375,11 @@
     {
       "id": "f35a6e15-b660-4664-a542-5eba0dc993d4",
       "type": "sticky",
-      "label": "Team PRs add a feedback loop. Reviewers comment, request changes, and the author pushes updates to the same branch. The PR updates automatically. Force-pushing rewrites PR branch history (acceptable here). The cycle repeats until approval.",
+      "label": "Team PRs add a feedback loop to the single-developer flow. After you push and open a PR, reviewers examine the code, leave comments, and may request changes. You address the feedback by pushing additional commits to the same branch — the PR updates automatically. Force-pushing is acceptable on PR branches to clean up history (squash fixup commits). The review cycle repeats: push updates, get reviewed, address feedback, until the reviewer approves. Once approved, the PR is merged (often requiring passing CI checks as well). This loop is the core quality gate in professional software development.",
       "x": 4050,
       "y": 3550,
-      "width": 380,
-      "height": 250,
+      "width": 420,
+      "height": 282,
       "zIndex": 98,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -1517,11 +1517,11 @@
     {
       "id": "b7d6de1f-7147-4016-959b-1ef5a9c31ff4",
       "type": "sticky",
-      "label": "Open source uses a triangle: upstream (the original repo), origin (your fork), and local (your clone). You fork to get your own copy, clone that, work on a branch, push to your fork, then open a PR against upstream. The maintainer merges without giving you write access.",
+      "label": "Open-source contribution uses a triangle of repositories: upstream (the original project), origin (your personal fork on GitHub), and local (your clone on disk). You fork the upstream repo to create your own copy, then clone your fork locally. You add the upstream repo as a second remote to stay in sync: \"git remote add upstream <url>\". Work happens on a feature branch in your local clone, pushed to your fork (origin). You then open a PR from your fork against the upstream repo. The maintainer reviews and merges without ever giving you write access to the upstream repo. Periodically, pull from upstream to keep your fork in sync.",
       "x": 6050,
       "y": 3550,
-      "width": 380,
-      "height": 260,
+      "width": 420,
+      "height": 304,
       "zIndex": 108,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -1632,11 +1632,11 @@
     {
       "id": "3fe964ef-1857-4465-b1af-383a4ebba05e",
       "type": "sticky",
-      "label": "Conflicts happen when two branches modify the same lines. Git cannot auto-merge, so it marks conflicts with <<<<<<< / ======= / >>>>>>> markers. You manually choose what to keep, stage the resolved files, and complete the merge. It is not an error—it is Git asking for a decision.",
+      "label": "Conflicts happen when two branches modify the same lines in the same file. Git cannot automatically decide which version to keep, so it marks the conflicted sections with <<<<<<< / ======= / >>>>>>> markers in the file. Everything above ======= is your branch's version; everything below is the incoming branch's version. Resolution means editing the file to keep what you want (possibly combining both sides), removing the conflict markers, staging the resolved file with \"git add\", and completing the merge commit. A conflict is not an error — it is Git asking you to make a decision it cannot make automatically.",
       "x": 50,
       "y": 5350,
-      "width": 380,
-      "height": 270,
+      "width": 420,
+      "height": 282,
       "zIndex": 116,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -1804,11 +1804,11 @@
     {
       "id": "0f762ffe-011f-4005-a742-668cc30bc8be",
       "type": "sticky",
-      "label": "Both integrate changes, but differently. Merge preserves the true history—you can see when branches diverged and joined. Rebase rewrites history to look linear, as if you started after the latest main commit. Use merge for shared branches, rebase for local cleanup.",
+      "label": "Both rebase and merge integrate changes from one branch into another, but they produce different histories. Merge preserves the true branching history — you can see exactly when branches diverged and reconverged. It creates a merge commit with two parents. The history is accurate but non-linear. Rebase replays your commits on top of the target branch, rewriting their SHAs to create a linear history. It looks as if you started your work after the latest main commit. The history is cleaner but rewritten. The golden rule: never rebase commits that have been pushed to a shared branch, because rewriting public history forces everyone else to reconcile the divergence.",
       "x": 2450,
       "y": 5350,
-      "width": 380,
-      "height": 260,
+      "width": 420,
+      "height": 304,
       "zIndex": 128,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -2061,11 +2061,11 @@
     {
       "id": "55aedbb9-7e7a-4be7-a4f4-e36c09bddd23",
       "type": "sticky",
-      "label": "Before opening a PR, clean up your commit history. Interactive rebase lets you squash WIP commits, reorder for logical flow, reword messages, and drop mistakes. The result: a clean, reviewable history that tells a story.",
+      "label": "Before opening a PR, clean up your commit history with interactive rebase. \"git rebase -i HEAD~n\" opens an editor showing your last n commits with action keywords. You can: squash multiple WIP commits into one meaningful commit, reorder commits for logical flow, reword commit messages for clarity, edit a commit to split it, or drop commits entirely. The result is a clean, reviewable history that tells a clear story of what changed and why. Reviewers will thank you for a well-organized commit history.",
       "x": 4850,
       "y": 5350,
-      "width": 380,
-      "height": 250,
+      "width": 420,
+      "height": 260,
       "zIndex": 146,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -2302,11 +2302,11 @@
     {
       "id": "e8a5fd44-179f-4998-b40c-7435f8a36ebf",
       "type": "sticky",
-      "label": "Production is broken and cannot wait for the next release. A hotfix branch creates an emergency path: branch from main (production), fix the bug, merge back to main immediately for deployment, then also merge into any active development branches so the fix is not lost.",
+      "label": "Production is broken and cannot wait for the next release. A hotfix branch creates an emergency path: branch directly from main (which represents production), fix the critical bug with minimal changes, merge back to main immediately and deploy. Tag the release (e.g., v1.0.1) for traceability. Crucially, also merge the hotfix into any active development branches so the fix is not lost when those branches eventually merge back. Hotfix branches should be laser-focused — fix only the bug, nothing else.",
       "x": 50,
       "y": 7150,
-      "width": 380,
-      "height": 270,
+      "width": 420,
+      "height": 238,
       "zIndex": 163,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -2514,11 +2514,11 @@
     {
       "id": "72c38bca-d2ab-4fa6-9105-b24f1dd81db2",
       "type": "sticky",
-      "label": "Git Flow uses long-lived branches for structure: main (production), develop (integration), and temporary release branches for stabilization. Features merge to develop. When ready, a release branch cuts from develop for final testing. Once stable, it merges to both main and develop.",
+      "label": "Git Flow uses long-lived branches to provide structure for larger projects. Main always reflects production. Develop is the integration branch where features come together. Features branch from develop and merge back when complete. When enough features are ready, a release branch cuts from develop for stabilization — only bug fixes go into the release branch, no new features. Once stable, the release branch merges to both main (for deployment) and develop (to preserve fixes). Main gets a version tag (e.g., v1.0). This model gives clear structure but adds overhead compared to simpler workflows like trunk-based development.",
       "x": 2450,
       "y": 7150,
-      "width": 380,
-      "height": 280,
+      "width": 420,
+      "height": 304,
       "zIndex": 178,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -2754,11 +2754,11 @@
     {
       "id": "832f60b0-70db-4ac8-94ef-5f742a0c7d93",
       "type": "sticky",
-      "label": "The modern alternative to Git Flow: keep branches short-lived (hours, not days). Everyone merges to main frequently. Incomplete features hide behind feature flags. This reduces merge conflicts, speeds up integration, and keeps the codebase always deployable.",
+      "label": "The modern alternative to Git Flow: keep branches extremely short-lived (hours to a day or two, not weeks). Everyone merges to main frequently, often multiple times per day. Main is always deployable — CI/CD runs on every merge. Incomplete features are hidden behind feature flags rather than living on long-running branches. This reduces merge conflicts (small, frequent merges), speeds up integration, and keeps the codebase always in a releasable state. Trunk-based development is the workflow behind continuous deployment practices at companies like Google and Meta.",
       "x": 4850,
       "y": 7150,
-      "width": 380,
-      "height": 270,
+      "width": 420,
+      "height": 282,
       "zIndex": 195,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -2952,8 +2952,8 @@
       "id": "aaa420ba-b21c-489b-9cc6-014104a74502",
       "type": "sticky",
       "label": "Compare with Git Flow:\n- Branches live hours, not weeks\n- Main is always deployable\n- Feature flags replace long branches\n- CI/CD deploys from main",
-      "x": 5850,
-      "y": 7880,
+      "x": 5750,
+      "y": 7900,
       "width": 290,
       "height": 120,
       "zIndex": 209,
@@ -2996,11 +2996,11 @@
     {
       "id": "72e856d0-33db-4d5d-8c7c-9f628ced6441",
       "type": "sticky",
-      "label": "Sometimes you need one specific commit from another branch without merging everything. Cherry-pick copies the diff of a commit and applies it as a new commit on your current branch. The new commit gets a different SHA but contains the same changes.",
+      "label": "Sometimes you need one specific commit from another branch without merging the entire branch. \"git cherry-pick <sha>\" copies the diff of that commit and applies it as a new commit on your current branch. The new commit has a different SHA but contains the exact same changes. Cherry-pick is commonly used for backporting a bug fix from a development branch to a release branch, or pulling a specific feature commit without taking unfinished work that comes with it. Use it surgically and sparingly — overuse can lead to duplicate commits and confusion.",
       "x": 50,
       "y": 8950,
-      "width": 380,
-      "height": 250,
+      "width": 420,
+      "height": 260,
       "zIndex": 212,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -3192,11 +3192,11 @@
     {
       "id": "bc80cf9e-318d-4a61-a7be-8baf7bea339b",
       "type": "sticky",
-      "label": "Mid-feature when something urgent comes up. Stash saves uncommitted changes to a temporary stack outside the branch model. Switch to the urgent branch, fix it, switch back, pop your stash to resume exactly where you left off. A clipboard for in-progress work.",
+      "label": "You are mid-feature with uncommitted changes when something urgent comes up. \"git stash\" saves your uncommitted work (both staged and unstaged) to a temporary stack, leaving your working tree clean so you can switch branches safely. Fix the urgent issue, commit it, then switch back and run \"git stash pop\" to restore your work exactly where you left off. The stash stack can hold multiple entries — \"git stash list\" shows them all. Think of stash as a clipboard for in-progress work that is not ready to commit. It works outside the normal branch model — stashes are not tied to any branch.",
       "x": 2050,
       "y": 8950,
-      "width": 380,
-      "height": 250,
+      "width": 420,
+      "height": 282,
       "zIndex": 226,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -3446,11 +3446,11 @@
     {
       "id": "a9d69539-4ba7-43b9-a851-c22a4c98ba20",
       "type": "sticky",
-      "label": "When a bug appeared sometime recently, bisect does a binary search through commit history. Mark a known-good and known-bad commit, Git checks out the midpoint. You test, mark good/bad, Git narrows the range. Finds the culprit in O(log n) steps.",
-      "x": 4050,
+      "label": "When a bug appeared \"sometime recently\" and you do not know which commit introduced it, bisect does a binary search through commit history to find the culprit. You mark a known-good commit (where the bug did not exist) and a known-bad commit (where it does). Git checks out the midpoint commit. You test it and mark it good or bad. Git narrows the range and checks out the next midpoint. In O(log n) steps, you find the exact commit that introduced the bug. For 1000 commits, that is only about 10 tests instead of 1000. You can even automate it with \"git bisect run <test-script>\".",
+      "x": 4130,
       "y": 8950,
-      "width": 380,
-      "height": 250,
+      "width": 240,
+      "height": 282,
       "zIndex": 244,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -3710,11 +3710,11 @@
     {
       "id": "2e16b8ae-3a1a-434b-8a65-d474de615344",
       "type": "sticky",
-      "label": "Every push triggers the pipeline. Feature branches run lint, test, and build to validate changes. Main branch gets the full pipeline with deployment stages. The approval gate is a manual checkpoint before production. The pipeline is the final gatekeeper.",
+      "label": "Every push triggers a CI/CD pipeline that validates and deploys your code. Feature branches run lint, test, and build stages to validate changes before merging. The main branch gets the full pipeline: lint, test, build, deploy to staging, an approval gate, and finally deploy to production. The approval gate is a manual checkpoint — a human reviews the staging deployment before promoting to production. Branch-conditional stages mean feature branches skip deployment but main gets the full treatment. The pipeline is the final gatekeeper: no matter how good the code looks, it must pass CI to ship.",
       "x": 6050,
       "y": 8950,
-      "width": 380,
-      "height": 250,
+      "width": 420,
+      "height": 282,
       "zIndex": 263,
       "style": {
         "backgroundColor": "#fff3cd",
@@ -3875,14 +3875,1814 @@
       }
     },
     {
-      "id": "1e4e546a-f227-447f-84f6-a7318e6c0306",
+      "id": "f9b84286-9192-4da6-8d6b-2033f2e56660",
       "type": "sticky",
       "label": "New Note",
-      "x": 2722.000030517578,
-      "y": 5443.5,
+      "x": 15.972328186034842,
+      "y": 6701.666666666667,
       "width": 200,
       "height": 200,
       "zIndex": 275
+    },
+    {
+      "id": "221531a3-fa99-40ef-81b2-61756842cc03",
+      "type": "sticky",
+      "label": "ELI5: Think of it like packing a suitcase for a trip. Your closet (working tree) has all your clothes. You pick outfits and lay them on the bed (staging area) to decide what to bring. When you zip the suitcase shut (commit), those choices are locked in. You can always pull something back out of the suitcase if you change your mind (restore).",
+      "x": 50,
+      "y": 699,
+      "width": 420,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "c3fe5f3b-b86a-4dd5-84eb-4afdf04558b9",
+      "type": "sticky",
+      "label": "LEGEND\n---\nBlue rectangle = Working Tree (your files on disk)\nYellow rectangle = Staging Area / Index (snapshot being prepared)\nGreen circle = Local Repository (committed history, HEAD)\n---\nArrows labeled with git commands show how files move between states.\n\"git add\" moves changes from working tree to staging.\n\"git commit\" moves staged changes into the repository.\n\"git restore\" pulls changes back from staging or HEAD.",
+      "x": 970,
+      "y": 300,
+      "width": 380,
+      "height": 392,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "d680de5a-3415-4252-9cd4-58bb999183ba",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nCommitting without reviewing staged changes — always run \"git diff --staged\" first.\nUsing \"git add .\" blindly — this stages everything, including files you did not intend to commit.\nConfusing \"git restore\" with \"git reset\" — restore affects files, reset affects commits/HEAD.\nForgetting that unstaged changes are NOT in the commit — only what you \"git add\" gets committed.",
+      "x": 970,
+      "y": 707,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "50959ae0-0c57-4715-b692-9499f7266d9d",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git add -p\" to stage individual hunks — review each change interactively.\nUse \"git status\" constantly — it tells you exactly what is staged, modified, and untracked.\nSet up a .gitignore early to keep build artifacts and secrets out of your repo.\nUse \"git stash\" if you need to temporarily shelve uncommitted work.",
+      "x": 970,
+      "y": 982,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "fba35ab9-b473-458e-87c6-e62d44ccd54b",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit add <file>         Stage a specific file\ngit add -p             Stage changes interactively (hunk by hunk)\ngit commit -m \"msg\"    Commit staged changes with a message\ngit restore <file>     Discard working tree changes\ngit restore --staged   Unstage a file (keep working tree changes)\ngit diff               Show unstaged changes\ngit diff --staged      Show staged changes\ngit status             Show working tree and staging status",
+      "x": 970,
+      "y": 1257,
+      "width": 380,
+      "height": 370,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "650e8734-c839-40a4-b46b-28e6fff8b590",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nThis is the fundamental workflow you use every single time you write code and want to save it to Git. Every commit you ever make follows this exact path: edit files, stage changes, commit. If you are brand new to Git, master this diagram before anything else — it is the foundation for everything.",
+      "x": 970,
+      "y": 1642,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b6196e6a-fbdb-4f06-8917-8d586820da01",
+      "type": "sticky",
+      "label": "ELI5: Imagine a choose-your-own-adventure book. Each branch is a different storyline starting from the same page. Creating a branch is like putting a bookmark at the current page (it costs nothing). Switching branches is like flipping to a different bookmark. Each storyline can grow independently until you decide to merge them back together.",
+      "x": 1855,
+      "y": 655,
+      "width": 420,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "2ff88308-863d-4f87-8f2a-7efac62263ac",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on the main branch\nBlue circle = Commit on a feature branch\nPurple rectangle = Branch label (pointer to a commit)\nRed text (HEAD) = The currently checked-out branch pointer\n---\nArrows between circles show parent-child commit relationships.\nThe branch label sits at the commit it currently points to.",
+      "x": 3180,
+      "y": 300,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "a2cbf002-d963-4c6f-9c96-d2e91674ccdb",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nCreating a branch but forgetting to switch to it — \"git branch X\" does not check it out.\nWorking on main directly instead of a feature branch — always branch first.\nConfusing \"git branch -d\" (safe delete) with \"git branch -D\" (force delete).\nNot pulling latest main before creating a branch — your branch starts from stale code.",
+      "x": 3180,
+      "y": 641,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "faf8d61d-a1c9-400f-ba83-6fe5285bee3b",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git switch -c feature\" to create and switch in one step.\nName branches descriptively: feature/add-login, fix/null-pointer, docs/api-guide.\nUse \"git log --oneline --graph --all\" to visualize all branches.\nDelete merged branches promptly to keep your branch list clean.",
+      "x": 3180,
+      "y": 916,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b277238d-27de-4ded-84e8-fd041a2baa48",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit branch                  List local branches\ngit branch <name>           Create a new branch\ngit switch <name>           Switch to a branch\ngit switch -c <name>        Create and switch in one step\ngit branch -d <name>        Delete a merged branch\ngit branch -D <name>        Force-delete a branch\ngit log --oneline --graph   Visualize branch history",
+      "x": 3180,
+      "y": 1191,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "8b4deb66-858b-416a-b7f9-14a5ffd8562d",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nCreate a new branch every time you start working on something — a feature, a bug fix, an experiment. Never commit directly to main. Branches are free and give you a safe sandbox. Use this pattern even when working solo — it builds habits that scale to teams.",
+      "x": 3180,
+      "y": 1488,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "c8b9b081-c66d-47ab-a7bd-970229aedbeb",
+      "type": "sticky",
+      "label": "ELI5: Imagine you are standing in line and the person in front of you leaves. You just step forward — no merging or negotiation needed. That is a fast-forward: main was standing still, so it just steps forward to where your branch is.",
+      "x": 3855,
+      "y": 633,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "071928d8-e346-4951-823c-4d89840db96a",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on main (before merge)\nBlue circle = Commit on feature branch\nPurple rectangle = Branch label\n---\nAfter the merge, the main pointer advances to the latest commit.\nNo merge commit is created — the history stays linear.\nArrows show the commit chain (parent to child).",
+      "x": 5070,
+      "y": 300,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "8ec8be41-95e0-4d45-9800-b182d0b5f71f",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nAssuming all merges are fast-forward — they only work when main has not diverged.\nForgetting to pull before merging — remote changes on main prevent fast-forward.\nUsing \"--no-ff\" unintentionally, which forces a merge commit even when fast-forward is possible.",
+      "x": 5070,
+      "y": 597,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "7beed846-2917-49e8-ba9c-3e3f9371501f",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git merge --ff-only\" to ensure only fast-forward merges happen — it fails if not possible.\nRebase your feature branch onto latest main before merging to enable fast-forward.\nSome teams enforce fast-forward-only merges for clean linear history.",
+      "x": 5070,
+      "y": 828,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "5ad9f8ba-4061-4865-a60d-ce49a143a9f1",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit merge <branch>          Merge (fast-forward if possible)\ngit merge --ff-only <br>    Only merge if fast-forward is possible\ngit merge --no-ff <br>      Force a merge commit even if FF possible\ngit log --oneline --graph   Verify linear history after merge",
+      "x": 5070,
+      "y": 1059,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "de2e1f3b-2ff4-415e-b628-8ad04337ad59",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nFast-forward merges happen naturally when you are the only one working on main (solo projects, or you just pulled the latest). They are ideal when you want clean, linear history without merge commits. If your team prefers merge commits for traceability, use \"--no-ff\" instead.",
+      "x": 5070,
+      "y": 1334,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "47ed29b1-2da8-4e09-92ac-767cfcbc58de",
+      "type": "sticky",
+      "label": "ELI5: Two friends are editing a shared Google Doc offline. Each makes different changes to their own copy. When they reconnect, the system compares both versions against the original to figure out what each person changed. It combines the changes into one final version. That final version is the merge commit — it has two parents (one from each friend).",
+      "x": 5855,
+      "y": 699,
+      "width": 420,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "eade45f9-aa36-4bde-8cd1-657ff2a723f4",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on main branch\nBlue circle = Commit on feature branch\nRed circle = Merge commit (has two parent commits)\nPurple rectangle = Branch label\n---\nThe diamond shape shows where branches diverge and reconverge.\nArrows point from child to parent commit.\nThe merge commit ties both histories together.",
+      "x": 7220,
+      "y": 300,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e14cd20d-5f85-4fc6-8ef2-799aa3e84bc9",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nPanicking when you see a merge commit — it is normal and expected when branches diverge.\nResolving merge conflicts by keeping only one side — read both changes carefully.\nNot testing after a merge — the combination of changes can introduce bugs even without conflicts.\nMerging a stale feature branch — pull and update first to minimize conflicts.",
+      "x": 7220,
+      "y": 597,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "7f0bfda3-09dd-4e48-abcc-1c621e61ea2c",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git log --graph --oneline\" to see the diamond pattern after merging.\nMerge frequently (small merges) instead of letting branches diverge for weeks.\nUse \"git merge --abort\" if a merge goes wrong — it restores your branch to the pre-merge state.\nConsider rebasing instead if you prefer linear history (see Diagram 12).",
+      "x": 7220,
+      "y": 872,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "3190e87b-6c9d-4dc2-bd87-c6283b1ac80c",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit merge <branch>        Merge branch into current branch\ngit merge --abort         Abort an in-progress merge\ngit log --graph --all     Visualize merge history\ngit merge-base A B        Find the common ancestor of two branches",
+      "x": 7220,
+      "y": 1147,
+      "width": 380,
+      "height": 238,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b1f3db7e-8aa2-41ef-b36a-b0dd09f9e83f",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nThree-way merges happen automatically whenever both branches have diverged. This is the standard merge pattern in team environments where multiple people commit to main. Use merge (not rebase) for shared branches where you need to preserve the true branching history.",
+      "x": 7220,
+      "y": 1400,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "760a8526-c5cf-4059-8a3c-d3e60cd1dab6",
+      "type": "sticky",
+      "label": "ELI5: Building a LEGO creation on a side table (feature branch). Your main display shelf (main branch) stays untouched while you experiment. When your creation is done, you move it to the display shelf (merge). Then you clean up the side table (delete branch) — the creation is safe on the shelf.",
+      "x": 50,
+      "y": 2247,
+      "width": 420,
+      "height": 172,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "fdeb077c-e23e-45f1-ae6a-75877c0e1510",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle (M1, M2, M3) = Commits on main\nBlue circle (F1, F2, F3) = Commits on the feature branch\nRed circle = Merge commit (integrates feature into main)\nGreen label (main) = Main branch pointer\nPurple label (feature) = Feature branch pointer\n---\nArrows show commit lineage.\nAfter merge, the feature label is deleted but commits remain.",
+      "x": 2130,
+      "y": 1900,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e777fb56-0339-4e6e-86fe-c9fc0b777bfb",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nForgetting to delete the feature branch after merging — branches pile up and cause confusion.\nMaking commits directly on main instead of a feature branch.\nMerging before the feature is complete — partial features break main.\nNot syncing main before starting a new feature — you inherit stale code.",
+      "x": 2130,
+      "y": 2241,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b2fb854b-7180-407f-b358-89dc397e0875",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git branch -d feature\" after merging — the -d flag is safe and only deletes if fully merged.\nKeep feature branches short-lived (days, not weeks) to minimize drift from main.\nCommit often with meaningful messages — it makes code review and debugging easier.",
+      "x": 2130,
+      "y": 2516,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "c7d91dc0-d1d8-4d74-944c-876258d6a37f",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit switch -c feature/x    Create and switch to feature branch\ngit commit -m \"msg\"        Commit on feature branch\ngit switch main             Switch back to main\ngit merge feature/x         Merge feature into main\ngit branch -d feature/x     Delete the merged branch",
+      "x": 2130,
+      "y": 2747,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "3329da72-bf17-41aa-b7b0-f66668025963",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nEvery time you start working on a discrete piece of functionality. Whether it is a new feature, a bug fix, a refactor, or an experiment — use this cycle. This is the default workflow for solo and team development alike.",
+      "x": 2130,
+      "y": 3044,
+      "width": 380,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "7a8113bc-f5b1-4094-a498-e1c91ee8d3e7",
+      "type": "sticky",
+      "label": "ELI5: Two artists painting on separate canvases in the same studio. Each can work without worrying about the other spilling paint on their canvas. When both are done, you hang them on the gallery wall (main) one at a time. If both artists used the same frame size, you might need to rearrange (resolve conflicts).",
+      "x": 3050,
+      "y": 2225,
+      "width": 420,
+      "height": 172,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e041f39a-7676-4308-8d48-5583770948b9",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on main\nBlue circle = Commit on Feature A\nOrange circle = Commit on Feature B\nRed circle = Merge commit\nGreen label = main branch\nBlue label = Feature A branch\nOrange label = Feature B branch\n---\nArrows show commit lineage.\nFeatures merge sequentially into main.",
+      "x": 4735,
+      "y": 1900,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "9815d644-e738-4d22-b556-814d4440d4a7",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nMerging features that depend on each other in the wrong order.\nWorking on too many parallel branches at once — context switching has a real cost.\nNot updating your feature branch with the latest main after another feature merges.\nCreating a feature branch from another feature branch instead of from main.",
+      "x": 4735,
+      "y": 2219,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "3da6ef97-97ef-489c-a508-c3ad96aa8212",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nAfter merging Feature A, rebase Feature B onto updated main before merging B.\nKeep features small and independent so they rarely conflict.\nUse \"git log --all --graph --oneline\" to track all parallel branches visually.\nCommunicate with your team about which files each feature touches.",
+      "x": 4735,
+      "y": 2494,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "92ff0f6f-609e-4b56-be50-28d79681616b",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit switch -c feature-a      Start Feature A from main\ngit switch -c feature-b      Start Feature B from main\ngit switch main && git merge feature-a   Merge A first\ngit switch feature-b && git rebase main  Update B\ngit switch main && git merge feature-b   Then merge B",
+      "x": 4735,
+      "y": 2769,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "4f364a96-eec4-4566-944a-37454462b168",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nWhenever you have multiple independent workstreams happening simultaneously. Common in team settings but also useful for solo developers juggling a feature and a bug fix. The key requirement: each feature should be as independent as possible to avoid conflicts.",
+      "x": 4735,
+      "y": 3066,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "8da615cc-3ef0-4600-a087-609ec16e21a7",
+      "type": "sticky",
+      "label": "ELI5: You and your friend each have a copy of the same notebook. When you write something new, you photocopy those pages and mail them (push). When your friend writes something, they mail you copies and you paste them in (pull). Clone is like photocopying the entire notebook for the first time.",
+      "x": -195,
+      "y": 3847,
+      "width": 420,
+      "height": 172,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "575a01d2-6601-4204-a118-419bf13a64ea",
+      "type": "sticky",
+      "label": "LEGEND\n---\nBlue circle (R1, R2, R3) = Commits on the remote repository\nGreen circle (L1, L2, L3, L4) = Commits on the local repository\n---\nArrows between remote and local show sync operations.\n\"git push\" arrows go from local to remote.\n\"git pull\" arrows go from remote to local.\n\"git clone\" creates the initial local copy.",
+      "x": 1170,
+      "y": 3500,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "23a9cc7d-27b3-4faa-a85f-caeed1064014",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nPushing without pulling first — this causes rejected pushes if the remote has new commits.\nConfusing \"git fetch\" with \"git pull\" — fetch downloads but does not merge.\nForce-pushing to shared branches — this rewrites history others depend on.\nNot setting an upstream branch — \"git push -u origin main\" sets it once.",
+      "x": 1170,
+      "y": 3819,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e63f420b-a2d4-4825-9981-c1036b9ee8d1",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git pull --rebase\" to keep a linear history when pulling remote changes.\nUse \"git fetch\" + \"git log origin/main..main\" to preview what you will push.\nSet \"git config pull.rebase true\" to default to rebase on pull.\nUse \"git remote -v\" to see which URLs your remotes point to.",
+      "x": 1170,
+      "y": 4094,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "16322a37-a5b2-4041-9416-96bc6e127410",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit clone <url>             Clone a remote repository\ngit push                    Push commits to the remote\ngit push -u origin <br>     Push and set upstream tracking\ngit pull                    Fetch + merge from remote\ngit pull --rebase           Fetch + rebase from remote\ngit fetch                   Download remote changes (no merge)\ngit remote -v               Show remote URLs",
+      "x": 1170,
+      "y": 4369,
+      "width": 380,
+      "height": 370,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "2b6c2723-0cac-4844-9391-9ad24f4bc459",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nThis is the basic collaboration cycle — you use it every time you sync work with a remote repository. Whether you are working with GitHub, GitLab, Bitbucket, or a self-hosted remote, clone/push/pull is how you participate.",
+      "x": 1170,
+      "y": 4754,
+      "width": 380,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "74cf711f-d0e1-4604-8e11-6e8aef457cec",
+      "type": "sticky",
+      "label": "ELI5: You write a letter, but before mailing it, you put it in an envelope labeled \"review\" and re-read it the next day with fresh eyes. That self-review step is the PR — it catches mistakes and creates a record of what you sent and why.",
+      "x": 1905,
+      "y": 3847,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "1becd457-62f9-42a6-b1f8-896c246faae5",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen rectangle = Local Git operations\nBlue rectangle = Remote/GitHub operations\nPurple rectangle = GitHub-specific steps (PR creation, merge)\nRed rectangle = Cleanup steps (delete branch)\n---\nArrows show the sequence of steps from local development through PR to cleanup.",
+      "x": 3520,
+      "y": 3500,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e08c3f53-eb2a-482b-a1c7-bf048a44d00a",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nMerging without reviewing the diff — even self-review catches bugs.\nForgetting to delete the remote branch after merging — enable auto-delete in GitHub settings.\nNot syncing local main after merging on GitHub — your local main falls behind.\nWriting empty PR descriptions — future you will not remember why the change was made.",
+      "x": 3520,
+      "y": 3775,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b3523f51-5e75-4427-a828-8b0e10eefbc4",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nEnable \"Automatically delete head branches\" in GitHub repo settings.\nWrite PR descriptions in present tense: \"Add login feature\" not \"Added login feature\".\nUse GitHub's \"Squash and merge\" to keep main history clean for small features.\nLink related issues in the PR description: \"Closes #42\".",
+      "x": 3520,
+      "y": 4050,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "dc28ff94-0d02-4242-bf30-250284bc4607",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit push -u origin feature   Push branch and set upstream\ngh pr create                 Create PR from CLI (GitHub CLI)\ngit switch main              Switch to main after merge\ngit pull                     Sync local main with remote\ngit branch -d feature        Delete local branch\ngit fetch --prune            Clean up stale remote refs",
+      "x": 3520,
+      "y": 4325,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "6570d721-3c72-4b50-a906-2626874d0579",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nUse this workflow even when working alone on personal projects. The self-review habit catches bugs, the PR trail documents decisions, and the pattern transfers directly to team collaboration. Skip this only for truly trivial changes (typo fixes, config bumps).",
+      "x": 3520,
+      "y": 4666,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e6e03719-6403-4922-a793-a72833d80c8e",
+      "type": "sticky",
+      "label": "ELI5: You write an essay and hand it to your teacher (open PR). The teacher marks it up with red pen (code review). You revise based on the notes and hand it back (push updates). This goes back and forth until the teacher gives it a gold star (approval) and publishes it (merge).",
+      "x": 3955,
+      "y": 3847,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "302d0149-0a66-4114-99e4-a00fa9e4eedc",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen rectangle = Developer actions (commit, push)\nPurple rectangle = GitHub actions (open PR, merge)\nYellow diamond = Decision point (approved?)\n---\nArrows show the flow of the review cycle.\nThe loop from \"Request Changes\" back to \"Push Updates\" repeats until approval.",
+      "x": 5320,
+      "y": 3500,
+      "width": 380,
+      "height": 238,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "5f9c719a-ce5c-4ee6-a719-531e53444b64",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nTaking code review personally — it is about the code, not you.\nMaking huge PRs — reviewers lose focus after 400 lines. Keep PRs small and focused.\nNot responding to review comments — even \"acknowledged, will fix\" is better than silence.\nForce-pushing to a shared branch (not a PR branch) — this rewrites history others depend on.",
+      "x": 5475,
+      "y": 3753,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "8f2d1296-d3fe-4832-b87a-3e615e255540",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nKeep PRs under 300 lines for faster, more thorough reviews.\nUse draft PRs for work-in-progress that you want early feedback on.\nUse \"git push --force-with-lease\" instead of \"--force\" — it prevents overwriting others' commits.\nAdd screenshots or test output to the PR description for visual changes.",
+      "x": 5465,
+      "y": 4028,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "3862db98-e9a2-4d9f-a8ae-71a7451753a7",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit push                       Push review fixes\ngit push --force-with-lease    Safe force-push after rebase\ngh pr create --draft           Open a draft PR (GitHub CLI)\ngh pr merge --squash           Squash-merge a PR\ngh pr review --approve         Approve a PR from CLI",
+      "x": 5320,
+      "y": 4303,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "56fbb949-fb01-4d58-9a83-f0eefee69e50",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nEvery team project. Code review is the single most effective quality practice in software engineering. Even two-person teams should review each other's code. The overhead pays for itself in fewer bugs, shared knowledge, and better code quality.",
+      "x": 5320,
+      "y": 4578,
+      "width": 380,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "38a725e0-994d-44ab-bc35-41c87b00b98e",
+      "type": "sticky",
+      "label": "ELI5: There is a community garden (upstream) that you want to contribute to, but you do not have the gate key. So you make a copy of the garden in your own yard (fork), plant some new flowers (commits), and then send a photo to the garden committee (PR). If they like your flowers, they replant them in the community garden (merge).",
+      "x": 5905,
+      "y": 3869,
+      "width": 420,
+      "height": 172,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "a035882e-bb33-4e0b-a70c-6174b92961a1",
+      "type": "sticky",
+      "label": "LEGEND\n---\nOrange rectangle = Upstream repository (original project)\nBlue rectangle = Origin / Fork (your GitHub copy)\nGreen rectangle = Local clone (on your machine)\nIndigo rectangle = Feature branch\nPurple rectangle = Pull Request on GitHub\n---\nArrows show the flow: fork, clone, branch, push, PR, merge.\nThe upstream-to-local arrow represents syncing with \"git pull upstream main\".",
+      "x": 7020,
+      "y": 3500,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "f346e23d-c6f4-4076-be18-fce2d3709c33",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nForgetting to add the upstream remote — you cannot sync without it.\nOpening a PR from the main branch of your fork — always use a feature branch.\nNot syncing your fork before starting new work — you will be working on stale code.\nMaking changes to files unrelated to your contribution — keep PRs focused.",
+      "x": 7020,
+      "y": 3841,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b3c52ce9-134a-49b6-9980-0d3332f88eb6",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nRead the project's CONTRIBUTING.md before starting.\nKeep your fork's main branch clean — only sync it from upstream, never commit to it directly.\nUse \"git pull upstream main && git push origin main\" to keep your fork current.\nReference the issue number in your PR and commit messages.",
+      "x": 7020,
+      "y": 4116,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "5832c08c-1ceb-4c80-ac75-20f6b0b8d998",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit remote add upstream <url>   Add upstream remote\ngit fetch upstream               Fetch upstream changes\ngit pull upstream main           Sync local main from upstream\ngit push origin main             Update your fork\ngit push -u origin feature       Push feature to your fork\ngh pr create                     Create PR against upstream",
+      "x": 7020,
+      "y": 4391,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "211709d6-8f67-4571-bfd6-61a2181bcbfd",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nContributing to any open-source project where you do not have write access. Also useful within organizations where different teams own different repos. The fork model enforces a clean separation between the maintainer and the contributor.",
+      "x": 7020,
+      "y": 4732,
+      "width": 380,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "14529c04-39f8-49db-a45c-83bf7bd59ee7",
+      "type": "sticky",
+      "label": "ELI5: Two people are editing the same sentence in a shared document at the same time. When they save, the system says \"I don't know which version you want — here are both, you pick.\" You read both versions, decide what the final sentence should be, and save it. Conflict resolved.",
+      "x": -95,
+      "y": 5647,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "ce88d954-e364-43a6-8381-353d1288c576",
+      "type": "sticky",
+      "label": "LEGEND\n---\nBlue circle/rectangle = Branch A changes\nOrange circle/rectangle = Branch B changes\nRed diamond = Conflict point (both branches changed same lines)\nRed rectangle = Conflict markers in the file\nYellow rectangle = Resolution step (edit the file)\nGreen rectangle/circle = Merge complete (conflict resolved)\n---\nArrows show the flow from conflict detection through resolution to completed merge.",
+      "x": 1620,
+      "y": 5300,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "eaedcc8e-03e4-448d-b71b-a79418a730ac",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nAccepting only \"ours\" or \"theirs\" without reading both sides — you may lose important changes.\nLeaving conflict markers (<<<<<<) in the code — always search for them after resolving.\nNot testing after conflict resolution — merged code can be syntactically valid but logically broken.\nAborting every merge conflict instead of learning to resolve them.",
+      "x": 1775,
+      "y": 5641,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "98356771-0763-4954-8f71-4438cd77d9cc",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git mergetool\" with a visual merge tool (VS Code, IntelliJ, Beyond Compare).\nSearch for \"<<<<<<\" after resolving to make sure you caught every conflict.\nUse \"git diff\" after resolving to review your resolution before committing.\nMerge frequently to keep conflicts small and manageable.",
+      "x": 1775,
+      "y": 5916,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "fcc100fc-b52d-4a54-a61b-65053a8f5270",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit merge <branch>      Start the merge (may conflict)\ngit status              See which files have conflicts\ngit diff                See conflict markers in files\ngit add <file>          Mark a file as resolved\ngit commit              Complete the merge commit\ngit merge --abort       Abandon the merge entirely\ngit mergetool           Open visual merge tool",
+      "x": 1620,
+      "y": 6191,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "15914b73-06fb-47fb-9067-f03ca4816242",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nYou do not choose when conflicts happen — they come to you. This is a skill you must have ready. Conflicts are most common when merging long-lived branches, integrating upstream changes, or when multiple people edit the same files. Practice on small conflicts to build confidence.",
+      "x": 1620,
+      "y": 6510,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "2b210116-83e1-48b5-928e-f6164f1ebe2f",
+      "type": "sticky",
+      "label": "ELI5: Merge is like combining two timelines in a movie — you see the parallel storylines come together. Rebase is like re-telling the story so everything happens in a single straight line. Both tell the same story, but merge shows the real timeline while rebase edits it to look simpler.",
+      "x": 2255,
+      "y": 5669,
+      "width": 420,
+      "height": 172,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b7f4d63d-a0cb-4a06-803c-6f6c5c4cb3a1",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on main\nBlue circle = Commit on feature branch\nPurple circle (Merge side) = Merge commit with two parents\nGreen sticky = Merge pros/cons\nBlue sticky = Rebase pros/cons\n---\nLeft diagram = Merge (non-linear, diamond pattern)\nRight diagram = Rebase (linear, single line)\nSmall circles (60x60) represent individual commits.",
+      "x": 4080,
+      "y": 5300,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "628f7231-d312-4c86-b13c-30fadc37d941",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nRebasing shared/pushed branches — this rewrites history others depend on (causes chaos).\nNot understanding that rebase changes commit SHAs — they are new commits.\nUsing rebase when merge is more appropriate (preserving history for auditing).\nForgetting to force-push after rebasing a PR branch — \"git push --force-with-lease\".",
+      "x": 4080,
+      "y": 5641,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "43474cf6-0db1-4e93-8501-f77fc0d999bd",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nSimple rule: rebase local/private branches, merge shared/public branches.\nUse \"git pull --rebase\" to rebase when pulling remote changes.\nIf a rebase goes wrong, use \"git rebase --abort\" to return to the original state.\nSome teams adopt \"rebase then merge --no-ff\" for clean but traceable history.",
+      "x": 4080,
+      "y": 5916,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "f11a8595-104f-4a23-96c7-b813aa590899",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit rebase main              Rebase current branch onto main\ngit rebase --abort           Abort a rebase in progress\ngit rebase --continue        Continue after resolving conflicts\ngit merge <branch>           Merge (preserves history)\ngit merge --no-ff <br>       Merge with explicit merge commit\ngit push --force-with-lease  Safe force-push after rebase",
+      "x": 4080,
+      "y": 6191,
+      "width": 380,
+      "height": 348,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b9078855-9f24-461a-afac-af7f141c94fd",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nUse MERGE when: working on shared branches, you need audit trail, or your team convention says so. Use REBASE when: cleaning up local feature branches before PR, you want linear history, or squashing messy WIP commits. Never rebase anything that has been pushed to a shared branch.",
+      "x": 4080,
+      "y": 6554,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "159c5f73-d747-42e9-a9f4-9bb3669033fe",
+      "type": "sticky",
+      "label": "ELI5: You wrote a messy rough draft with lots of scribbles and rewrites. Interactive rebase is like rewriting it as a clean final draft — same ideas, better organization. You combine repetitive paragraphs (squash), reorder sections (reorder), and fix typos in headings (reword).",
+      "x": 4755,
+      "y": 5625,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "1c9cb7ed-8ace-4683-9dad-fe35096ace38",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Clean, meaningful commit\nRed circle = WIP or messy commit (to be squashed/dropped)\nDarker green circle = Resulting clean commit after rebase\nRed label (\"Before\") = Messy commit history\nGreen label (\"After\") = Cleaned-up history\n---\nThe transformation shows messy commits on the left becoming clean commits on the right.",
+      "x": 5955,
+      "y": 5300,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "341c7e0b-3e1a-45d8-819b-bbe111a6de86",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nInteractive rebasing commits that are already pushed — rewrite only local history.\nSquashing everything into one giant commit — keep logical units separate.\nNot saving the rebase editor file — the rebase does nothing if you close without saving.\nPanicking during conflicts in rebase — use \"git rebase --abort\" to safely cancel.",
+      "x": 5955,
+      "y": 5619,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "142a8fc9-57f1-496b-a83f-db9d4ea79e43",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"fixup\" instead of \"squash\" to squash without keeping the commit message.\nUse \"git commit --fixup=<sha>\" while working, then \"git rebase -i --autosquash\" to auto-arrange.\nSet your preferred editor: git config core.editor \"code --wait\" (for VS Code).\nKeep a mental model of the story your commits should tell before rebasing.",
+      "x": 5955,
+      "y": 5894,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "bef43f5d-1b87-47ff-9578-6c40cc9082ed",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit rebase -i HEAD~n            Interactive rebase last n commits\ngit rebase -i --autosquash      Auto-arrange fixup commits\ngit commit --fixup=<sha>        Mark a commit for autosquash\ngit rebase --abort              Cancel rebase safely\ngit rebase --continue           Continue after resolving",
+      "x": 5955,
+      "y": 6169,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "585f3a81-a04a-4c64-8187-8d79cf49e29b",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nRight before opening a PR or before merging a feature branch. Clean up WIP commits (\"fix typo\", \"oops\", \"wip\") into meaningful units. Only use on local/unpushed commits or on your own PR branch (with force-push).",
+      "x": 5955,
+      "y": 6488,
+      "width": 380,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "566c0c72-4a0e-41c8-a885-a95b36e3111c",
+      "type": "sticky",
+      "label": "ELI5: Your house has a leaky pipe (bug in production). You do not wait until your full kitchen renovation (next release) to fix it. You call a plumber for an emergency repair (hotfix) right now. After the leak is fixed, you also tell the renovation crew about the repair so they do not undo it.",
+      "x": -135,
+      "y": 7403,
+      "width": 420,
+      "height": 172,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "6dbc415f-136c-4ebd-bffe-210b078e216b",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on main (production)\nRed diamond = BUG discovered in production\nRed circle = Hotfix commits (emergency fix)\nTeal hexagon = Version tag (e.g., v1.0.1)\nPurple circle = Commits on development branch\n---\nArrows show: main -> hotfix branch -> merge back to main + merge to develop.\nThe hexagon marks the release point.",
+      "x": 1605,
+      "y": 7100,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "24d9137a-620f-4838-9a19-630ee408adca",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nIncluding unrelated changes in a hotfix — keep it minimal.\nForgetting to merge the hotfix into development branches — the bug reappears later.\nNot tagging the hotfix release — you lose traceability.\nBranching from develop instead of main — the hotfix picks up unreleased code.",
+      "x": 1605,
+      "y": 7397,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e7977bb9-0123-4b64-9018-ffa5ea9c395d",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nAlways branch hotfixes from main/production, never from develop.\nUse a naming convention: hotfix/fix-login-crash, hotfix/patch-security-vuln.\nAutomate the merge-to-develop step in your CI/CD pipeline if possible.\nWrite a regression test for the bug before fixing it to prevent recurrence.",
+      "x": 1605,
+      "y": 7672,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "5e93969c-3497-4b59-909b-25b2d0e521e0",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit switch -c hotfix/x main   Branch from main\ngit commit -m \"fix: ...\"      Commit the fix\ngit switch main && git merge hotfix/x   Merge to main\ngit tag v1.0.1                Tag the release\ngit switch develop && git merge hotfix/x   Propagate fix\ngit branch -d hotfix/x        Clean up",
+      "x": 1605,
+      "y": 7947,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "618d403e-e34f-4397-a4da-c08adda46718",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nWhen a critical bug is found in production and cannot wait for the normal release cycle. Severity matters: use hotfix for P0/P1 issues (data loss, security, service down). For lower-severity bugs, the normal feature branch workflow is fine.",
+      "x": 1605,
+      "y": 8222,
+      "width": 380,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "2a858dcb-c2cb-4159-a19f-c5f3f03c8685",
+      "type": "sticky",
+      "label": "ELI5: Think of a newspaper. Reporters write articles (features) and submit them to the editor (develop). When enough articles are ready, the editor creates a draft issue (release branch) for proofreading. Only typo fixes are allowed at this stage — no new articles. Once proofread, the newspaper goes to print (merges to main) and the corrections go back to the newsroom (develop).",
+      "x": 2355,
+      "y": 7469,
+      "width": 420,
+      "height": 194,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "ac5d1d9b-f78b-4648-bf77-f5de892bcc88",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on main (production)\nBlue circle = Commit on develop (integration)\nYellow circle = Commit on release branch (stabilization)\nPurple circle = Commit on feature branch\nTeal hexagon = Version tag (e.g., v1.0)\n---\nSwim lanes show parallel branch timelines.\nArrows show flow: feature -> develop -> release -> main + develop.",
+      "x": 3835,
+      "y": 7100,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "99a46c1b-80b8-4b88-878e-2cdf379c7815",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nAdding new features to a release branch — release branches are for stabilization only.\nForgetting to merge the release back into develop — fixes get lost.\nUsing Git Flow for small/simple projects — the overhead is not worth it.\nLetting develop diverge too far from main — increases merge pain at release time.",
+      "x": 3835,
+      "y": 7419,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "c5b131e6-4c91-45b8-a0e1-05115168ecaa",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse Git Flow tooling: \"git flow init\", \"git flow feature start\", etc.\nSet a regular release cadence (weekly, biweekly) to keep branches from diverging.\nUse CI/CD to automate the release branch testing pipeline.\nConsider trunk-based development (Diagram 16) for smaller or more agile teams.",
+      "x": 3835,
+      "y": 7694,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "3a668244-6bbe-4641-8a99-2f1c429be0e2",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit flow init                         Initialize Git Flow\ngit flow feature start <name>         Start a feature\ngit flow feature finish <name>        Finish a feature\ngit flow release start <version>      Start release branch\ngit flow release finish <version>     Merge release to main+develop\ngit tag <version>                     Tag the release",
+      "x": 3835,
+      "y": 7969,
+      "width": 380,
+      "height": 348,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "b414bdc7-1f13-4bfe-8ec4-6522c1fe0fd6",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nLarge teams with scheduled releases, compliance requirements, or long QA cycles. If you ship continuously (deploy on every merge), trunk-based development is simpler. Git Flow shines when you need strict separation between development, staging, and production.",
+      "x": 3835,
+      "y": 8332,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "82912ad0-d6b9-438b-9441-2f3a7b21dcbc",
+      "type": "sticky",
+      "label": "ELI5: Instead of building a whole room addition before connecting it to the house, you add one brick at a time directly to the main structure. If a room is not ready for guests yet, you just keep the door locked (feature flag) until it is finished. The house is always livable.",
+      "x": 4655,
+      "y": 7447,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "6dbbf266-8818-41ac-b6eb-a4ba6be256ed",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle (T1-T7) = Commits on the trunk (main)\nPurple circle = Short-lived branch commit\nBlue circle = Short-lived branch commit (different developer)\nIndigo rectangle = Feature flag (hides incomplete work)\n---\nShort branches are tiny — they merge back within hours.\nThe trunk (main) is always deployable.\nIndigo sticky compares trunk-based vs Git Flow.",
+      "x": 6140,
+      "y": 7100,
+      "width": 380,
+      "height": 326,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "66a34ad1-01b8-499f-b9ff-a3636fb3d058",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nKeeping branches alive for days or weeks — defeats the purpose.\nNot having CI/CD in place — trunk-based requires automated testing to catch breaks fast.\nSkipping feature flags for half-done work — you will ship incomplete features.\nNot writing tests — without good test coverage, frequent merges break things.",
+      "x": 6225,
+      "y": 7441,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "6e942c32-89a9-4b6a-be1e-f340fb013907",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nPair trunk-based development with feature flags (LaunchDarkly, Unleash, or DIY).\nEnforce CI checks before merging to main — the trunk must always be green.\nUse \"short-lived feature branches\" (< 1 day) or commit directly to main.\nMonitor deployment metrics to catch regressions from frequent merges.",
+      "x": 6140,
+      "y": 7716,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "82b2b35c-481a-4ad8-8707-5c6d819daa44",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit switch -c short-fix        Create a very short-lived branch\ngit commit -m \"...\"            Make your change\ngit switch main && git pull    Sync main\ngit merge short-fix            Merge quickly\ngit push                       Deploy via CI/CD\ngit branch -d short-fix        Clean up immediately",
+      "x": 6140,
+      "y": 7991,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "19629cb9-e7a1-4028-b2d9-2714285a4372",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nTeams practicing continuous delivery or continuous deployment. When you want fast iteration, minimal merge pain, and always-deployable main. Requires good CI/CD, test coverage, and feature flag infrastructure. Not ideal for teams with long QA cycles or strict release gates.",
+      "x": 6140,
+      "y": 8266,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "49b81a9e-cb94-43bd-80d3-3aef562771e1",
+      "type": "sticky",
+      "label": "ELI5: Your friend's playlist has one great song you want. Instead of copying their entire playlist, you just copy that one song to yours. It is the same song (same changes), but it is a separate copy in your playlist (different SHA).",
+      "x": -145,
+      "y": 9225,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "731776ac-1db2-4919-a612-595592b55a8b",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Commit on main or target branch\nTeal circle = Original commit being cherry-picked (on source branch)\nOrange/amber circle = Cherry-picked copy (on target branch, different SHA)\n---\nDashed or special arrow shows the cherry-pick operation across branches.\nThe two commits have the same diff but different SHA hashes.",
+      "x": 1100,
+      "y": 8900,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "aabb3ca7-8bf5-4a32-985c-01d49cc1ff3d",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nCherry-picking a commit that depends on earlier commits — you get conflicts or broken code.\nOverusing cherry-pick instead of merging — leads to duplicate commits in the history.\nNot noting the original SHA — track where the cherry-pick came from for future reference.\nCherry-picking a merge commit without specifying the parent — use \"-m 1\" for the mainline parent.",
+      "x": 1100,
+      "y": 9219,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "f5791f52-51fe-47c5-8a54-c476ebeaebb9",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git cherry-pick -x\" to add a note referencing the original commit SHA.\nCherry-pick a range: \"git cherry-pick A..B\" to pick multiple commits.\nIf you cherry-pick frequently between branches, consider if merging would be better.\nUse \"git cherry-pick --no-commit\" to apply changes without committing (for manual adjustment).",
+      "x": 1100,
+      "y": 9494,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "4dbd98a2-59d4-450b-a97a-1c39946c3f82",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit cherry-pick <sha>          Apply one commit to current branch\ngit cherry-pick -x <sha>       Cherry-pick with original SHA note\ngit cherry-pick A..B           Cherry-pick a range of commits\ngit cherry-pick --no-commit    Apply without committing\ngit cherry-pick --abort        Abort if conflicts arise\ngit cherry-pick -m 1 <sha>     Cherry-pick a merge commit",
+      "x": 1100,
+      "y": 9769,
+      "width": 380,
+      "height": 348,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "4b1e89f2-1a41-4f40-9c54-779d7be66ada",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nBackporting a specific bug fix to a release or maintenance branch. Pulling a single useful commit from a feature branch that is not ready to merge. Emergency situations where you need one change without the rest of a branch. Use sparingly — if you are cherry-picking a lot, reconsider your branching strategy.",
+      "x": 1100,
+      "y": 10132,
+      "width": 380,
+      "height": 238,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "0d5ee008-60b7-40a0-93a9-32c58cc8bb3f",
+      "type": "sticky",
+      "label": "ELI5: You are in the middle of cooking dinner when the phone rings. You put your half-chopped vegetables in the fridge (stash) to keep them fresh. You take the call (fix the urgent issue). When you hang up, you pull the vegetables back out (stash pop) and continue cooking.",
+      "x": 1955,
+      "y": 9247,
+      "width": 420,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "d18a0c49-44fa-43e7-8e18-98609fe7187c",
+      "type": "sticky",
+      "label": "LEGEND\n---\nBlue rectangle = Feature work in progress\nYellow rectangle = Uncommitted changes\nGrey rectangle = Stash operation (save/pop)\nRed rectangle = Urgent hotfix work\nGreen rectangle = Resumed feature work\n---\nArrows show the sequence: working -> stash -> switch -> fix -> switch back -> pop.\nGrey represents the stash as a holding area outside the branch model.",
+      "x": 3805,
+      "y": 8900,
+      "width": 300,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "0064744e-7bf4-45c2-b64b-899826369166",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nForgetting you have stashed changes — run \"git stash list\" periodically.\nStashing when a commit would be better — if the work is at a logical stopping point, just commit it.\nUsing \"git stash drop\" accidentally instead of \"git stash pop\" — drop discards without applying.\nStashing too many things — the stack gets confusing. Use named stashes or just commit.",
+      "x": 3805,
+      "y": 9219,
+      "width": 300,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e64bbb27-e270-4924-9eea-78bcef0f77bf",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse \"git stash push -m description\" to name your stash entries.\nUse \"git stash -u\" to include untracked (new) files in the stash.\nUse \"git stash apply\" instead of \"pop\" if you want to keep the stash entry around.\nConsider \"git worktree\" as an alternative — work on two branches simultaneously without stashing.",
+      "x": 3805,
+      "y": 9494,
+      "width": 300,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "ad5bfa6e-6a25-4c3c-8cce-18f537bbdf5c",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit stash                  Stash uncommitted changes\ngit stash push -m \"msg\"   Stash with a description\ngit stash -u               Include untracked files\ngit stash list             Show all stash entries\ngit stash pop              Apply and remove latest stash\ngit stash apply            Apply but keep the stash entry\ngit stash drop             Discard the latest stash entry\ngit stash show -p          Show stash contents as a diff",
+      "x": 3805,
+      "y": 9769,
+      "width": 300,
+      "height": 370,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "5f87c01b-01bb-4094-861b-46846ecd64fd",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nWhen you need to switch branches but have uncommitted work that is not ready to commit. Quick context switches (urgent bug fix, code review on another branch). If you context-switch often, consider using \"git worktree\" for a more permanent solution. If your work is at a natural stopping point, just commit it instead of stashing.",
+      "x": 3805,
+      "y": 10154,
+      "width": 300,
+      "height": 238,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "37576f69-be81-4025-92ec-c73f3ad0eebc",
+      "type": "sticky",
+      "label": "ELI5: You are looking for a broken page in a 500-page book. Instead of checking every page, you open to the middle. Is it broken? If yes, the problem is in the first half. If no, it is in the second half. You keep halving until you find the exact page. That is bisect.",
+      "x": 4130,
+      "y": 9247,
+      "width": 240,
+      "height": 150,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "c62cb38a-a77c-42b5-9b86-78ec2c263589",
+      "type": "sticky",
+      "label": "LEGEND\n---\nGreen circle = Known good commit (bug not present)\nYellow circle = Candidate commit being tested\nRed circle = Known bad commit (bug present)\n---\nThe commit line shows a linear history.\nBisect narrows the search range from the full line down to one commit.\nArrows show the binary search narrowing the range.",
+      "x": 5250,
+      "y": 8900,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "d3b76f23-8f2f-46a2-8df2-ae8014aea72f",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nChoosing a \"good\" commit that actually had the bug — wrong starting point gives wrong results.\nNot having a reliable way to test for the bug — bisect requires a clear pass/fail test.\nForgetting to run \"git bisect reset\" when done — you will be stuck on a detached HEAD.\nMarking a commit wrong (good as bad or vice versa) — bisect gives wrong results.",
+      "x": 5250,
+      "y": 9175,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "2159646e-4ce0-4e0a-9b46-127150c57fd5",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nWrite a test script and use \"git bisect run ./test.sh\" to fully automate the search.\nThe test script should exit 0 for good and 1 for bad.\nUse \"git bisect skip\" if a commit cannot be tested (e.g., does not compile).\nStart with a wide range — you can always narrow it, but starting too narrow may miss the culprit.",
+      "x": 5250,
+      "y": 9450,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "4383934d-b86c-42b6-ac72-c8e876ee53d5",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit bisect start           Begin a bisect session\ngit bisect good <sha>      Mark a commit as good\ngit bisect bad <sha>       Mark a commit as bad\ngit bisect good/bad        Mark current commit\ngit bisect skip            Skip untestable commit\ngit bisect run <script>    Automate with a test script\ngit bisect reset           End bisect, return to branch\ngit bisect log             Show bisect progress",
+      "x": 5250,
+      "y": 9725,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "afd3413e-cc48-47a2-a62b-4f6241e7cf07",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nWhen a regression appeared and you know it worked at some point in the past but not which commit broke it. Most effective with 10+ commits to search through (otherwise just check manually). Especially powerful with automated test scripts — hands-free bug hunting.",
+      "x": 5250,
+      "y": 10044,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "5c3cad82-6c88-44c7-86df-21f225fc35ed",
+      "type": "sticky",
+      "label": "ELI5: A package moving through airport security. First it goes through the X-ray (lint), then gets inspected (test), then gets loaded on the plane (build). For important flights (main branch), there is an extra customs check (staging) and a human officer approves it (approval gate) before it lands at the destination (production).",
+      "x": 5905,
+      "y": 9247,
+      "width": 420,
+      "height": 172,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e3f2fd",
+        "borderColor": "#1976d2",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "7185408e-c2c8-44ab-9fea-c59f8b57c3da",
+      "type": "sticky",
+      "label": "LEGEND\n---\nIndigo rectangle = Git operation (push, trigger)\nBlue rectangle = CI stage (lint, test, build)\nGrey diamond = Branch condition (main branch?)\nGreen rectangle = Deploy to staging\nOrange rectangle = Manual approval gate\nRed rectangle = Deploy to production\n---\nArrows show the pipeline sequence.\nThe diamond branches: feature branches stop after build; main continues to deployment.",
+      "x": 7390,
+      "y": 8900,
+      "width": 380,
+      "height": 304,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "borderColor": "#9e9e9e",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "0ab70eb5-7c53-4b23-84cc-0583fb54d6ad",
+      "type": "sticky",
+      "label": "COMMON MISTAKES\n---\nSkipping CI for \"small changes\" — small changes can break everything.\nNot having a staging environment — deploying directly to production is risky.\nIgnoring flaky tests — they erode trust in the pipeline and people start ignoring failures.\nManual deployment steps outside the pipeline — if it is not in CI, it is not repeatable.",
+      "x": 7625,
+      "y": 9219,
+      "width": 380,
+      "height": 260,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#ffebee",
+        "borderColor": "#c62828",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "0d8c2ebe-7413-47c3-960a-7126164f8f71",
+      "type": "sticky",
+      "label": "PRO TIPS\n---\nUse GitHub Actions, GitLab CI, or similar for pipeline automation.\nCache dependencies between runs to speed up CI.\nRun linting and tests in parallel to reduce pipeline time.\nAdd status checks as required on the main branch — block merges if CI fails.\nUse branch protection rules to enforce the pipeline.",
+      "x": 7390,
+      "y": 9494,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8f5e9",
+        "borderColor": "#2e7d32",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "e0e06fe8-2657-4be1-a5cb-945a443dd83a",
+      "type": "sticky",
+      "label": "COMMANDS REFERENCE\n---\ngit push                    Trigger CI pipeline\ngh run list                 View recent CI runs (GitHub CLI)\ngh run view <id>            Check specific run status\ngh run rerun <id>           Re-run a failed pipeline\ngh pr checks                View CI status for a PR",
+      "x": 7390,
+      "y": 9791,
+      "width": 380,
+      "height": 282,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#e8eaf6",
+        "borderColor": "#283593",
+        "color": "#333"
+      }
+    },
+    {
+      "id": "c3f486c8-3bde-4d89-b7d2-a74413ae2be7",
+      "type": "sticky",
+      "label": "WHEN TO USE THIS\n---\nEvery project with more than one contributor should have CI/CD. Even solo projects benefit from automated testing on push. The approval gate is optional for smaller teams but essential for production services. This is the industry standard for professional software delivery.",
+      "x": 7390,
+      "y": 10088,
+      "width": 380,
+      "height": 216,
+      "zIndex": 3,
+      "style": {
+        "backgroundColor": "#fff8e1",
+        "borderColor": "#ff8f00",
+        "color": "#333"
+      }
     }
   ],
   "edges": [
@@ -7692,8 +9492,78 @@
       "actor": "user",
       "action": "updated_board",
       "summary": "Updated board metadata"
+    },
+    {
+      "id": "fa5be21e-3751-4867-9e61-cc3d4c50b230",
+      "timestamp": "2026-03-07T04:42:29.714Z",
+      "actor": "user",
+      "action": "updated_board",
+      "summary": "Updated board metadata"
+    },
+    {
+      "id": "f03e16dc-2cc8-438a-9017-bbdeb797e8b3",
+      "timestamp": "2026-03-07T04:49:40.778Z",
+      "actor": "user",
+      "action": "updated_board",
+      "summary": "Updated board metadata"
+    },
+    {
+      "id": "e1f50861-e081-48dc-8744-31afa489bdb8",
+      "timestamp": "2026-03-07T04:49:45.929Z",
+      "actor": "user",
+      "action": "updated_board",
+      "summary": "Updated board metadata"
+    },
+    {
+      "id": "93f57e83-be88-41f7-9b1a-f86c6684482a",
+      "timestamp": "2026-03-07T04:52:29.458Z",
+      "actor": "user",
+      "action": "bulk_updated_nodes",
+      "summary": "Bulk updated 275 nodes"
+    },
+    {
+      "id": "aa99e4fc-de93-4596-bfd7-c3cb00cd952a",
+      "timestamp": "2026-03-07T04:52:30.761Z",
+      "actor": "user",
+      "action": "deleted_node",
+      "summary": "Deleted node \"New Note\""
+    },
+    {
+      "id": "74754b4b-fa8b-4a6f-b5d2-a29eb685e519",
+      "timestamp": "2026-03-07T04:52:35.548Z",
+      "actor": "user",
+      "action": "updated_board",
+      "summary": "Updated board metadata"
+    },
+    {
+      "id": "eeec1368-e722-4f15-b76c-0591a9d96c8d",
+      "timestamp": "2026-03-07T05:01:49.312Z",
+      "actor": "user",
+      "action": "updated_board",
+      "summary": "Updated board metadata"
+    },
+    {
+      "id": "8fafd3dd-c137-492c-aa53-e7e0b9ccd3e3",
+      "timestamp": "2026-03-07T05:02:23.419Z",
+      "actor": "user",
+      "action": "created_node",
+      "summary": "Created node \"New Note\""
+    },
+    {
+      "id": "ce156eef-22e7-470f-a0fc-71d42522e611",
+      "timestamp": "2026-03-07T05:02:28.225Z",
+      "actor": "user",
+      "action": "updated_board",
+      "summary": "Updated board metadata"
+    },
+    {
+      "id": "595a9544-1d42-40d0-986e-aa76e742591e",
+      "timestamp": "2026-03-07T13:22:27.680Z",
+      "actor": "user",
+      "action": "updated_board",
+      "summary": "Updated board metadata"
     }
   ],
   "createdAt": "2026-03-07T04:26:47.139Z",
-  "updatedAt": "2026-03-07T04:39:44.845Z"
+  "updatedAt": "2026-03-07T13:23:27.987Z"
 }
