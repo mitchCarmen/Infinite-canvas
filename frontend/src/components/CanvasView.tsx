@@ -160,6 +160,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         data: {
           ...node.data,
           boardId,
+          canvasLight,
           isEditing: node.id === editingNodeId,
           onStartEdit: () => setEditingNodeId(node.id),
           onFinishEdit: async (newLabel: string) => {
@@ -173,7 +174,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         },
       };
     });
-  }, [nodes, editingNodeId, boardId, refetch, dimmedNodeIds]);
+  }, [nodes, editingNodeId, boardId, refetch, dimmedNodeIds, canvasLight]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();

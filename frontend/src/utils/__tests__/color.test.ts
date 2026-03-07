@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getContrastColor } from '../color';
+import { getContrastColor, ensureContrast } from '../color';
 
 describe('getContrastColor', () => {
   it('returns white for dark backgrounds', () => {
@@ -28,5 +28,26 @@ describe('getContrastColor', () => {
   it('returns white for invalid/unparseable input', () => {
     expect(getContrastColor('not-a-color')).toBe('#ffffff');
     expect(getContrastColor('')).toBe('#ffffff');
+  });
+});
+
+describe('ensureContrast', () => {
+  it('keeps text color when contrast is sufficient', () => {
+    // Dark text on light background
+    expect(ensureContrast('#1a1a1a', '#ffffff')).toBe('#1a1a1a');
+    // Light text on dark background
+    expect(ensureContrast('#ffffff', '#1e1e24')).toBe('#ffffff');
+  });
+
+  it('overrides dark text on dark background', () => {
+    // #1a1a2e on #1e1e24 — both dark, insufficient contrast
+    expect(ensureContrast('#1a1a2e', '#1e1e24')).toBe('#ffffff');
+    // #666 on dark canvas
+    expect(ensureContrast('#666666', '#1e1e24')).toBe('#ffffff');
+  });
+
+  it('overrides light text on light background', () => {
+    // White text on white canvas
+    expect(ensureContrast('#ffffff', '#ffffff')).toBe('#1a1a1a');
   });
 });

@@ -1,14 +1,14 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
-import { getContrastColor } from '../../utils/color';
+import { getContrastColor, ensureContrast } from '../../utils/color';
 
 export default function TextNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 150;
   const height = (data.height as number) ?? 40;
-  const CANVAS_BG = '#1e1e24';
+  const canvasBg = data.canvasLight ? '#ffffff' : '#1e1e24';
   const explicitColor = (data.style as Record<string, string>)?.color;
-  const color = explicitColor ?? getContrastColor(CANVAS_BG);
+  const color = explicitColor ? ensureContrast(explicitColor, canvasBg) : getContrastColor(canvasBg);
   const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 

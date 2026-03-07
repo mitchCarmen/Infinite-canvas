@@ -41,3 +41,28 @@ export function getContrastColor(bgColor: string): string {
   if (!rgb) return LIGHT;
   return relativeLuminance(rgb.r, rgb.g, rgb.b) > 0.179 ? DARK : LIGHT;
 }
+
+/**
+ * Compute WCAG contrast ratio between two colors.
+ * Returns a value between 1 (identical) and 21 (black vs white).
+ */
+function contrastRatio(color1: string, color2: string): number {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+  if (!rgb1 || !rgb2) return 1;
+  const l1 = relativeLuminance(rgb1.r, rgb1.g, rgb1.b);
+  const l2 = relativeLuminance(rgb2.r, rgb2.g, rgb2.b);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Ensure a text color has sufficient contrast against a background.
+ * If the contrast ratio is below 3:1 (WCAG AA for large text),
+ * returns a properly contrasting color instead.
+ */
+export function ensureContrast(textColor: string, bgColor: string): string {
+  if (contrastRatio(textColor, bgColor) >= 3) return textColor;
+  return getContrastColor(bgColor);
+}
