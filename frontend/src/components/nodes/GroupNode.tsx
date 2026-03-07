@@ -52,10 +52,14 @@ export default function GroupNode({ data, selected }: NodeProps) {
           />
         </div>
       )}
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
-      <Handle type="target" position={Position.Left} id="left" />
-      <Handle type="source" position={Position.Right} id="right" />
+      <Handle type="target" position={Position.Top} id="top-target" />
+      <Handle type="source" position={Position.Top} id="top-source" />
+      <Handle type="target" position={Position.Bottom} id="bottom-target" />
+      <Handle type="source" position={Position.Bottom} id="bottom-source" />
+      <Handle type="target" position={Position.Left} id="left-target" />
+      <Handle type="source" position={Position.Left} id="left-source" />
+      <Handle type="target" position={Position.Right} id="right-target" />
+      <Handle type="source" position={Position.Right} id="right-source" />
     </div>
   );
 }

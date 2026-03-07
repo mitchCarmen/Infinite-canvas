@@ -1012,6 +1012,45 @@ body {
   }
 }
 
+/* React Flow Handles — connection points on nodes */
+
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+/* Show handles when hovering over a node or when connecting */
+.react-flow__node:hover .react-flow__handle,
+.react-flow__handle-connecting,
+.react-flow__handle-valid,
+.react-flow .connecting .react-flow__handle {
+  opacity: 1;
+}
+
+.react-flow__handle:hover {
+  opacity: 1;
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.4);
+}
+
+/* Valid drop target during connection drag */
+.react-flow__handle-valid {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+/* Connection line styling */
+.react-flow__connection-line {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
 /* Export: hide UI elements during capture */
 
 .export-hide-ui .react-flow__minimap,

@@ -6,6 +6,7 @@ import {
   Controls,
   Background,
   BackgroundVariant,
+  ConnectionMode,
   SelectionMode,
   useReactFlow,
   type ReactFlowInstance,
@@ -389,6 +390,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onNodeDoubleClick={onNodeDoubleClick}
           onNodeDragStart={onNodeDragStart}
           onNodeDragStop={onNodeDragStop}
+          connectionMode={ConnectionMode.Loose}
           isValidConnection={isValidConnection}
           deleteKeyCode={null}
           onPaneClick={() => setContextMenu(null)}
