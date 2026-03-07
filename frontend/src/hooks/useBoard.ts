@@ -94,6 +94,7 @@ export function useBoard(boardId: string) {
   }, [boardId, setNodes, setEdges]);
 
   useEffect(() => {
+    initialLoadDone.current = false;
     fetchBoard();
   }, [fetchBoard]);
 
