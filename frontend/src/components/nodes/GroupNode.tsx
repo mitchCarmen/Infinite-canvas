@@ -1,13 +1,16 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
+import { getContrastColor } from '../../utils/color';
 
 export default function GroupNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 400;
   const height = (data.height as number) ?? 300;
   const fill = (data.style as Record<string, string>)?.backgroundColor ?? 'rgba(200, 200, 200, 0.1)';
   const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#888888';
-  const color = (data.style as Record<string, string>)?.color ?? '#555555';
+  const CANVAS_BG = '#1e1e24';
+  const explicitColor = (data.style as Record<string, string>)?.color;
+  const color = explicitColor ?? getContrastColor(CANVAS_BG);
   const fontSize = (data.style as Record<string, string>)?.fontSize ?? '13px';
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
