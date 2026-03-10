@@ -119,6 +119,18 @@ describe('BoardStore', () => {
       await expect(store.updateNode(board.id, 'fake', { label: 'X' }, 'user'))
         .rejects.toThrow('Node not found');
     });
+
+    it('updateNode can change node type and resets dimensions', async () => {
+      const board = await store.createBoard('test', 'user');
+      const b2 = await store.createNode(board.id, { type: 'rectangle', label: 'R1' }, 'user');
+      const nodeId = b2.nodes[0].id;
+
+      const b3 = await store.updateNode(board.id, nodeId, { type: 'circle' }, 'user');
+      const updated = b3.nodes.find(n => n.id === nodeId)!;
+      expect(updated.type).toBe('circle');
+      expect(updated.width).toBe(100);  // DEFAULT_NODE_DIMENSIONS.circle.width
+      expect(updated.height).toBe(100); // DEFAULT_NODE_DIMENSIONS.circle.height
+    });
   });
 
   describe('deleteNode', () => {

@@ -25,6 +25,7 @@ interface CreateNodeOpts {
 }
 
 interface UpdateNodeOpts {
+  type?: NodeType;
   label?: string;
   x?: number;
   y?: number;
@@ -218,6 +219,11 @@ export class BoardStore {
     if (idx === -1) throw new Error('Node not found');
 
     const node = board.nodes[idx];
+    if (updates.type !== undefined && updates.type !== node.type) {
+      node.type = updates.type;
+      if (updates.width === undefined) node.width = DEFAULT_NODE_DIMENSIONS[updates.type].width;
+      if (updates.height === undefined) node.height = DEFAULT_NODE_DIMENSIONS[updates.type].height;
+    }
     if (updates.label !== undefined) node.label = updates.label;
     if (updates.x !== undefined) node.x = updates.x;
     if (updates.y !== undefined) node.y = updates.y;
@@ -245,6 +251,11 @@ export class BoardStore {
       if (idx === -1) throw new Error(`Node not found: ${update.nodeId}`);
 
       const node = board.nodes[idx];
+      if (update.type !== undefined && update.type !== node.type) {
+        node.type = update.type;
+        if (update.width === undefined) node.width = DEFAULT_NODE_DIMENSIONS[update.type].width;
+        if (update.height === undefined) node.height = DEFAULT_NODE_DIMENSIONS[update.type].height;
+      }
       if (update.label !== undefined) node.label = update.label;
       if (update.x !== undefined) node.x = update.x;
       if (update.y !== undefined) node.y = update.y;
