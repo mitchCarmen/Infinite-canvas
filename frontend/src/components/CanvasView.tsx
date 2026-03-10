@@ -26,7 +26,7 @@ import { useExport } from '../hooks/useExport';
 import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
-import FloatingStyleBar from './FloatingStyleBar';
+import { NodeFormattingToolbar } from './toolbar';
 import SearchBar from './SearchBar';
 import ActivityLogDrawer from './ActivityLogDrawer';
 import AlignmentGuides from './AlignmentGuides';
@@ -332,6 +332,8 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   // Double-click on node starts editing
   const onNodeDoubleClick: NodeMouseHandler = useCallback(
     (_event, node) => {
+      const isLocked = (node.data as Record<string, unknown>)?.locked === true;
+      if (isLocked) return;
       setEditingNodeId(node.id);
     },
     [],
@@ -455,7 +457,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         )}
         {contextMenu && <ContextMenu {...contextMenu} />}
         {selectedNodes.length > 0 && (
-          <FloatingStyleBar
+          <NodeFormattingToolbar
             selectedNodes={selectedNodes}
             boardId={boardId}
             onRefetch={refetch}
