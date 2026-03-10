@@ -49,6 +49,17 @@ Boards are stored as individual JSON files in `boards/` directory.
 
 - In `toFlowNodes` (`useBoard.ts`), `CanvasNode.data` is spread BEFORE explicit properties to ensure top-level fields (`label`, `style`, `width`, `height`, `nodeType`) always take precedence over anything in the custom `data` record. Never reorder the spread to come after these fields.
 
+## Canvas Interactions (Figma/Miro-style)
+
+- **Click-drag on empty canvas** → selection box
+- **Click-drag on a node** → move node (+ selected siblings)
+- **Two-finger trackpad scroll** → pan viewport
+- **Right-click / middle-click drag** → pan viewport
+- **Pinch** → zoom
+- **Cmd+click** → toggle add/remove from selection
+- **Double-click canvas** → create rectangle node
+- **Double-click node** → edit node label
+
 ## Node Types
 
 rectangle, circle, ellipse, diamond, hexagon, parallelogram, cylinder, triangle, sticky, text, image, group

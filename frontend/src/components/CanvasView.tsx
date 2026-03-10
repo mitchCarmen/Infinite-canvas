@@ -310,17 +310,17 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     [boardId, refetch, screenToFlowPosition, snapToGrid, fitView, toggleSnap],
   );
 
-  // Double-click on canvas creates sticky note
+  // Double-click on canvas creates a new rectangle node
   const onPaneDoubleClick = useCallback(
     async (event: React.MouseEvent) => {
       const flowPos = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
-      snapshot('add sticky note');
+      snapshot('add rectangle node');
       await api.createNode(boardId, {
-        type: 'sticky',
-        label: 'New Note',
+        type: 'rectangle',
+        label: 'New Node',
         x: flowPos.x,
         y: flowPos.y,
       });
@@ -385,12 +385,16 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={baseNodeTypes}
+          selectionOnDrag
           selectionMode={SelectionMode.Partial}
-          multiSelectionKeyCode="Shift"
+          multiSelectionKeyCode="Meta"
+          panOnDrag={[1, 2]}
+          panOnScroll
+          zoomOnScroll={false}
           snapToGrid={snapToGrid}
           snapGrid={snapGrid}
-          panActivationKeyCode="Space"
           minZoom={0.1}
+          zoomOnDoubleClick={false}
           zoomOnPinch
           onInit={(instance) => {
             setReactFlowInstance(instance as unknown as ReactFlowInstance);
