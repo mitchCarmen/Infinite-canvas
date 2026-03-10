@@ -1,16 +1,23 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
-import { getContrastColor, ensureContrast } from '../../utils/color';
+import { useNodeStyle } from '../../hooks/useNodeStyle';
+import { ensureContrast } from '../../utils/color';
+import NodeBadges from './NodeBadges';
 
 export default function TextNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 150;
   const height = (data.height as number) ?? 40;
   const canvasBg = data.canvasLight ? '#ffffff' : '#1e1e24';
-  const explicitColor = (data.style as Record<string, string>)?.color;
-  const color = explicitColor ? ensureContrast(explicitColor, canvasBg) : getContrastColor(canvasBg);
-  const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
+  const {
+    color: styleColor, fontSize, fontFamily, fontWeight,
+    textAlign, verticalAlign, locked, link, emoji,
+  } = useNodeStyle(data);
+  const color = ensureContrast(styleColor, canvasBg);
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
+
+  const alignItems = verticalAlign === 'top' ? 'flex-start' : verticalAlign === 'bottom' ? 'flex-end' : 'center';
+  const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
     <div
@@ -19,13 +26,15 @@ export default function TextNode({ data, selected }: NodeProps) {
         height,
         position: 'relative',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems,
+        justifyContent,
         color,
         fontSize,
+        fontFamily,
+        fontWeight,
       }}
     >
-      <NodeResizer isVisible={!!selected} minWidth={40} minHeight={20} />
+      <NodeResizer isVisible={!!selected && !locked} minWidth={40} minHeight={20} />
       {isEditing ? (
         <input
           ref={inputRef}
@@ -34,11 +43,12 @@ export default function TextNode({ data, selected }: NodeProps) {
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          style={{ fontSize }}
+          style={{ fontSize, fontFamily }}
         />
       ) : (
-        label
+        <span style={{ textAlign, wordBreak: 'break-word', overflow: 'hidden' }}>{label}</span>
       )}
+      <NodeBadges link={link} emoji={emoji} locked={locked} />
       <Handle type="target" position={Position.Top} id="top-target" />
       <Handle type="source" position={Position.Top} id="top-source" />
       <Handle type="target" position={Position.Bottom} id="bottom-target" />

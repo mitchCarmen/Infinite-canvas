@@ -1,38 +1,41 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
-import { getContrastColor } from '../../utils/color';
+import { useNodeStyle } from '../../hooks/useNodeStyle';
+import NodeBadges from './NodeBadges';
 
 export default function DiamondNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 120;
   const height = (data.height as number) ?? 120;
-  const fill = (data.style as Record<string, string>)?.backgroundColor ?? '#ffffff';
-  const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#333333';
-  const explicitColor = (data.style as Record<string, string>)?.color;
-  const color = explicitColor ?? getContrastColor(fill);
-  const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
+  const {
+    fill, borderColor, color, fontSize, fontFamily, fontWeight,
+    textAlign, verticalAlign, locked, link, emoji,
+  } = useNodeStyle(data);
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
   const cx = width / 2;
   const cy = height / 2;
   const points = `${cx},1 ${width - 1},${cy} ${cx},${height - 1} 1,${cy}`;
 
+  const alignItems = verticalAlign === 'top' ? 'flex-start' : verticalAlign === 'bottom' ? 'flex-end' : 'center';
+  const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
+
   return (
     <div style={{ width, height, position: 'relative' }}>
-      <NodeResizer isVisible={!!selected} minWidth={60} minHeight={60} />
+      <NodeResizer isVisible={!!selected && !locked} minWidth={60} minHeight={60} />
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <polygon points={points} fill={fill} stroke={borderColor} strokeWidth={2} />
         {!isEditing && (
-          <text
-            x={cx}
-            y={cy}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fill={color}
-            fontSize={fontSize}
-          >
-            {label}
-          </text>
+          <foreignObject x={width * 0.25} y={height * 0.25} width={width * 0.5} height={height * 0.5}>
+            <div style={{
+              width: '100%', height: '100%',
+              display: 'flex', alignItems, justifyContent,
+              color, fontSize, fontFamily, fontWeight,
+              textAlign, overflow: 'hidden', wordBreak: 'break-word',
+            }}>
+              {label}
+            </div>
+          </foreignObject>
         )}
       </svg>
       {isEditing && (
@@ -44,10 +47,11 @@ export default function DiamondNode({ data, selected }: NodeProps) {
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            style={{ fontSize }}
+            style={{ fontSize, fontFamily }}
           />
         </div>
       )}
+      <NodeBadges link={link} emoji={emoji} locked={locked} />
       <Handle type="target" position={Position.Top} id="top-target" />
       <Handle type="source" position={Position.Top} id="top-source" />
       <Handle type="target" position={Position.Bottom} id="bottom-target" />

@@ -1,21 +1,28 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
-import { getContrastColor } from '../../utils/color';
+import { useNodeStyle } from '../../hooks/useNodeStyle';
+import NodeBadges from './NodeBadges';
 
 export default function StickyNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 200;
   const height = (data.height as number) ?? 200;
-  const fill = (data.style as Record<string, string>)?.backgroundColor ?? '#fff9c4';
-  const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#e6db00';
-  const explicitColor = (data.style as Record<string, string>)?.color;
-  const color = explicitColor ?? getContrastColor(fill);
-  const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
+  const {
+    fill: rawFill, borderColor: rawBorderColor, color, fontSize, fontFamily, fontWeight,
+    textAlign, verticalAlign, locked, link, emoji,
+  } = useNodeStyle(data);
+  // Sticky notes use yellow defaults instead of white
+  const style = (data.style as Record<string, string>) ?? {};
+  const fill = style.backgroundColor ?? '#fff9c4';
+  const borderColor = style.borderColor ?? '#e6db00';
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
+
+  const alignItems = verticalAlign === 'top' ? 'flex-start' : verticalAlign === 'bottom' ? 'flex-end' : 'center';
+  const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
     <div style={{ width, height, position: 'relative' }}>
-      <NodeResizer isVisible={!!selected} minWidth={80} minHeight={80} />
+      <NodeResizer isVisible={!!selected && !locked} minWidth={80} minHeight={80} />
       <svg
         width={width}
         height={height}
@@ -37,6 +44,12 @@ export default function StickyNode({ data, selected }: NodeProps) {
               style={{
                 color,
                 fontSize,
+                fontFamily,
+                fontWeight,
+                textAlign,
+                display: 'flex',
+                alignItems,
+                justifyContent,
                 wordWrap: 'break-word',
                 overflow: 'hidden',
                 width: '100%',
@@ -57,10 +70,11 @@ export default function StickyNode({ data, selected }: NodeProps) {
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            style={{ fontSize }}
+            style={{ fontSize, fontFamily }}
           />
         </div>
       )}
+      <NodeBadges link={link} emoji={emoji} locked={locked} />
       <Handle type="target" position={Position.Top} id="top-target" />
       <Handle type="source" position={Position.Top} id="top-source" />
       <Handle type="target" position={Position.Bottom} id="bottom-target" />

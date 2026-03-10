@@ -26,7 +26,7 @@ import { useExport } from '../hooks/useExport';
 import { api } from '../api';
 import Toolbar from './Toolbar';
 import ContextMenu, { type ContextMenuProps } from './ContextMenu';
-import { NodeFormattingToolbar } from './toolbar';
+import { NodeFormattingToolbar } from './toolbar/index';
 import SearchBar from './SearchBar';
 import ActivityLogDrawer from './ActivityLogDrawer';
 import AlignmentGuides from './AlignmentGuides';

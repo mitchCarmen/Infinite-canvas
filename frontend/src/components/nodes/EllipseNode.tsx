@@ -1,21 +1,24 @@
 import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
-import { getContrastColor } from '../../utils/color';
+import { useNodeStyle } from '../../hooks/useNodeStyle';
+import NodeBadges from './NodeBadges';
 
 export default function EllipseNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 140;
   const height = (data.height as number) ?? 80;
-  const fill = (data.style as Record<string, string>)?.backgroundColor ?? '#ffffff';
-  const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#333333';
-  const explicitColor = (data.style as Record<string, string>)?.color;
-  const color = explicitColor ?? getContrastColor(fill);
-  const fontSize = (data.style as Record<string, string>)?.fontSize ?? '14px';
+  const {
+    fill, borderColor, color, fontSize, fontFamily, fontWeight,
+    textAlign, verticalAlign, locked, link, emoji,
+  } = useNodeStyle(data);
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
+
+  const alignItems = verticalAlign === 'top' ? 'flex-start' : verticalAlign === 'bottom' ? 'flex-end' : 'center';
+  const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
     <div style={{ width, height, position: 'relative' }}>
-      <NodeResizer isVisible={!!selected} minWidth={60} minHeight={40} />
+      <NodeResizer isVisible={!!selected && !locked} minWidth={60} minHeight={40} />
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <ellipse
           cx={width / 2}
@@ -27,16 +30,16 @@ export default function EllipseNode({ data, selected }: NodeProps) {
           strokeWidth={2}
         />
         {!isEditing && (
-          <text
-            x={width / 2}
-            y={height / 2}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fill={color}
-            fontSize={fontSize}
-          >
-            {label}
-          </text>
+          <foreignObject x={4} y={4} width={width - 8} height={height - 8}>
+            <div style={{
+              width: '100%', height: '100%',
+              display: 'flex', alignItems, justifyContent,
+              color, fontSize, fontFamily, fontWeight,
+              textAlign, overflow: 'hidden', wordBreak: 'break-word',
+            }}>
+              {label}
+            </div>
+          </foreignObject>
         )}
       </svg>
       {isEditing && (
@@ -48,10 +51,11 @@ export default function EllipseNode({ data, selected }: NodeProps) {
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            style={{ fontSize }}
+            style={{ fontSize, fontFamily }}
           />
         </div>
       )}
+      <NodeBadges link={link} emoji={emoji} locked={locked} />
       <Handle type="target" position={Position.Top} id="top-target" />
       <Handle type="source" position={Position.Top} id="top-source" />
       <Handle type="target" position={Position.Bottom} id="bottom-target" />
