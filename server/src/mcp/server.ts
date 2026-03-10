@@ -95,12 +95,14 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
     {
       boardId: z.string(),
       nodeId: z.string(),
+      type: z.enum(NODE_TYPES).optional(),
       label: z.string().optional(),
       x: z.number().optional(),
       y: z.number().optional(),
       width: z.number().optional(),
       height: z.number().optional(),
       style: z.record(z.string(), z.string()).optional(),
+      data: z.record(z.string(), z.unknown()).optional(),
     },
     (args) => wrapHandler('update_node')(args),
   );

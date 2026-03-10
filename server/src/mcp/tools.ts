@@ -37,12 +37,14 @@ export function createMcpToolHandler(boardsDir: string): ToolHandler {
 
       case 'update_node':
         return store.updateNode(args.boardId, args.nodeId, {
+          type: args.type,
           label: args.label,
           x: args.x,
           y: args.y,
           width: args.width,
           height: args.height,
           style: args.style,
+          data: args.data,
         }, actor);
 
       case 'delete_node':
