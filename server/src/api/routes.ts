@@ -94,8 +94,8 @@ export function createApp(boardsDir: string) {
 
   app.patch('/api/boards/:id/nodes/:nodeId', async (req, res, next) => {
     try {
-      const { label, x, y, width, height, style, data } = req.body;
-      const board = await store.updateNode(req.params.id, req.params.nodeId, { label, x, y, width, height, style, data }, 'user');
+      const { type, label, x, y, width, height, style, data } = req.body;
+      const board = await store.updateNode(req.params.id, req.params.nodeId, { type, label, x, y, width, height, style, data }, 'user');
       res.json(board);
     } catch (err) {
       next(err);
