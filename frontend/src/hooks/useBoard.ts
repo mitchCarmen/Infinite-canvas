@@ -17,6 +17,7 @@ import { useUndoRedo } from './useUndoRedo';
 
 function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
   return canvasNodes.map((n) => {
+    const isLocked = n.data?.locked === true;
     const node: Node = {
       id: n.id,
       type: n.type,
@@ -31,6 +32,7 @@ function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
       },
       zIndex: n.zIndex,
       style: { width: n.width, height: n.height },
+      draggable: !isLocked,
     };
     if (n.parentId) {
       node.parentId = n.parentId;
