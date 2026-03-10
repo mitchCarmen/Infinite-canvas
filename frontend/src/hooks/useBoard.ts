@@ -22,12 +22,12 @@ function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
       type: n.type,
       position: { x: n.x, y: n.y },
       data: {
+        ...(n.data ?? {}),
         label: n.label,
         style: n.style ?? {},
         width: n.width,
         height: n.height,
         nodeType: n.type,
-        ...(n.data ?? {}),
       },
       zIndex: n.zIndex,
       style: { width: n.width, height: n.height },

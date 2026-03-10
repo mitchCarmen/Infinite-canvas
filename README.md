@@ -23,9 +23,9 @@ To use InfiniteCanvas as an MCP tool server with Claude, add this to `~/.claude/
   "mcpServers": {
     "infinite-canvas": {
       "command": "node",
-      "args": ["/Users/mitchcarmen/Documents/Projects/Personal/Infinite_canvas/.worktrees/implement/server/dist/server/bin/mcp.js"],
+      "args": ["/Users/mitchcarmen/Documents/Projects/Personal/Infinite_canvas/server/dist/server/bin/mcp.js"],
       "env": {
-        "BOARDS_DIR": "/Users/mitchcarmen/Documents/Projects/Personal/Infinite_canvas/.worktrees/implement/boards"
+        "BOARDS_DIR": "/Users/mitchcarmen/Documents/Projects/Personal/Infinite_canvas/boards"
       }
     }
   }
@@ -67,7 +67,7 @@ server/          Express REST API + MCP stdio server
   bin/           MCP server entry point
 frontend/        React + React Flow UI
   src/components/ Canvas, toolbar, board list, modals
-  src/hooks/     Keyboard shortcuts, custom hooks
+  src/hooks/     Board state management, keyboard shortcuts, custom hooks
   src/api.ts     REST client
 ```
 

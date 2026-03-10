@@ -17,6 +17,7 @@ Local-only infinite whiteboard with MCP server integration. Monorepo: `shared/` 
 | `server/src/data/layout.ts` | Dagre-based auto-layout engine |
 | `frontend/src/api.ts` | REST client for frontend |
 | `frontend/src/components/CanvasView.tsx` | Main canvas component (React Flow) |
+| `frontend/src/hooks/useBoard.ts` | Board state management hook (React Flow integration) |
 | `frontend/src/hooks/useKeyboardShortcuts.ts` | Keyboard shortcut bindings |
 
 ## How to Run
@@ -43,6 +44,10 @@ Boards are stored as individual JSON files in `boards/` directory.
 - Board mutations (create_node, update_node, etc.) return the full board object
 - Both MCP and REST share the same BoardStore instance pattern (but separate instances)
 - The `createMcpToolHandler` and `createApp` factories both accept a `boardsDir` path
+
+## Known Patterns
+
+- In `toFlowNodes` (`useBoard.ts`), `CanvasNode.data` is spread BEFORE explicit properties to ensure top-level fields (`label`, `style`, `width`, `height`, `nodeType`) always take precedence over anything in the custom `data` record. Never reorder the spread to come after these fields.
 
 ## Node Types
 
