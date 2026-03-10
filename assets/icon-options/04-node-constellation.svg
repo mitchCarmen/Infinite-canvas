@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0c0c1d"/>
+      <stop offset="100%" style="stop-color:#151530"/>
+    </linearGradient>
+    <linearGradient id="edge4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22d3ee"/>
+      <stop offset="100%" style="stop-color:#a78bfa"/>
+    </linearGradient>
+    <filter id="glow4">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg4)"/>
+  <!-- Edges connecting nodes -->
+  <line x1="512" y1="340" x2="340" y2="500" stroke="url(#edge4)" stroke-width="2.5" opacity="0.4"/>
+  <line x1="512" y1="340" x2="684" y2="500" stroke="url(#edge4)" stroke-width="2.5" opacity="0.4"/>
+  <line x1="340" y1="500" x2="420" y2="680" stroke="url(#edge4)" stroke-width="2.5" opacity="0.4"/>
+  <line x1="684" y1="500" x2="604" y2="680" stroke="url(#edge4)" stroke-width="2.5" opacity="0.4"/>
+  <line x1="420" y1="680" x2="604" y2="680" stroke="url(#edge4)" stroke-width="2.5" opacity="0.4"/>
+  <line x1="512" y1="340" x2="512" y2="510" stroke="url(#edge4)" stroke-width="2" opacity="0.25"/>
+  <line x1="340" y1="500" x2="512" y2="510" stroke="url(#edge4)" stroke-width="2" opacity="0.25"/>
+  <line x1="684" y1="500" x2="512" y2="510" stroke="url(#edge4)" stroke-width="2" opacity="0.25"/>
+  <!-- Outer faint nodes -->
+  <circle cx="240" cy="340" r="5" fill="#22d3ee" opacity="0.2"/>
+  <line x1="240" y1="340" x2="340" y2="500" stroke="#22d3ee" stroke-width="1.5" opacity="0.1"/>
+  <circle cx="784" cy="340" r="5" fill="#a78bfa" opacity="0.2"/>
+  <line x1="784" y1="340" x2="684" y2="500" stroke="#a78bfa" stroke-width="1.5" opacity="0.1"/>
+  <circle cx="300" cy="800" r="4" fill="#22d3ee" opacity="0.15"/>
+  <line x1="300" y1="800" x2="420" y2="680" stroke="#22d3ee" stroke-width="1.5" opacity="0.08"/>
+  <circle cx="724" cy="800" r="4" fill="#a78bfa" opacity="0.15"/>
+  <line x1="724" y1="800" x2="604" y2="680" stroke="#a78bfa" stroke-width="1.5" opacity="0.08"/>
+  <!-- Primary nodes -->
+  <g filter="url(#glow4)">
+    <circle cx="512" cy="340" r="18" fill="#22d3ee" opacity="0.9"/>
+    <circle cx="340" cy="500" r="14" fill="#38bdf8" opacity="0.85"/>
+    <circle cx="684" cy="500" r="14" fill="#818cf8" opacity="0.85"/>
+    <circle cx="420" cy="680" r="12" fill="#6366f1" opacity="0.8"/>
+    <circle cx="604" cy="680" r="12" fill="#a78bfa" opacity="0.8"/>
+  </g>
+  <!-- Center node -->
+  <circle cx="512" cy="510" r="10" fill="#e0e7ff" opacity="0.6"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg8" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0c0a1a"/>
+      <stop offset="100%" style="stop-color:#1a1030"/>
+    </linearGradient>
+    <linearGradient id="arr8v" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#ef4444"/>
+    </linearGradient>
+    <linearGradient id="arr8h" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg8)"/>
+  <!-- Radial rings -->
+  <circle cx="512" cy="512" r="100" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity="0.08"/>
+  <circle cx="512" cy="512" r="180" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.12"/>
+  <circle cx="512" cy="512" r="270" fill="none" stroke="#8b5cf6" stroke-width="1.5" opacity="0.08"/>
+  <!-- Up arrow -->
+  <line x1="512" y1="440" x2="512" y2="240" stroke="url(#arr8v)" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+  <polyline points="480,280 512,240 544,280" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  <!-- Down arrow -->
+  <line x1="512" y1="584" x2="512" y2="784" stroke="url(#arr8v)" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+  <polyline points="480,744 512,784 544,744" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  <!-- Left arrow -->
+  <line x1="440" y1="512" x2="240" y2="512" stroke="url(#arr8h)" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+  <polyline points="280,480 240,512 280,544" fill="none" stroke="#8b5cf6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  <!-- Right arrow -->
+  <line x1="584" y1="512" x2="784" y2="512" stroke="url(#arr8h)" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+  <polyline points="744,480 784,512 744,544" fill="none" stroke="#06b6d4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  <!-- Center hub -->
+  <circle cx="512" cy="512" r="28" fill="none" stroke="#fbbf24" stroke-width="3" opacity="0.5"/>
+  <circle cx="512" cy="512" r="10" fill="#fbbf24" opacity="0.8"/>
+  <circle cx="512" cy="512" r="4" fill="white"/>
+</svg>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="corner3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f472b6"/>
+      <stop offset="100%" style="stop-color:#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg3)"/>
+  <!-- Inner bracket corners - tight -->
+  <path d="M400 460 L400 400 L460 400" fill="none" stroke="url(#corner3)" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M564 400 L624 400 L624 460" fill="none" stroke="url(#corner3)" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M624 564 L624 624 L564 624" fill="none" stroke="url(#corner3)" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M460 624 L400 624 L400 564" fill="none" stroke="url(#corner3)" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+  <!-- Outer bracket corners - expanding -->
+  <path d="M280 360 L280 260 L380 260" fill="none" stroke="#f472b6" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+  <path d="M644 260 L744 260 L744 360" fill="none" stroke="#c084fc" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+  <path d="M744 664 L744 764 L644 764" fill="none" stroke="#a78bfa" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+  <path d="M380 764 L280 764 L280 664" fill="none" stroke="#e879f9" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+  <!-- Outermost hints -->
+  <path d="M180 300 L180 170 L310 170" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" opacity="0.15"/>
+  <path d="M714 170 L844 170 L844 300" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" opacity="0.15"/>
+  <path d="M844 724 L844 854 L714 854" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.15"/>
+  <path d="M310 854 L180 854 L180 724" fill="none" stroke="#e879f9" stroke-width="2.5" stroke-linecap="round" opacity="0.15"/>
+  <!-- Center crosshair -->
+  <line x1="492" y1="512" x2="532" y2="512" stroke="#e9d5ff" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="512" y1="492" x2="512" y2="532" stroke="#e9d5ff" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+</svg>

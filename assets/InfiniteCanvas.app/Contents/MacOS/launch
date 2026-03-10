@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Load nvm so node/npm are available outside a terminal
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+PROJECT_DIR="/Users/mitchcarmen/Documents/Projects/Personal/Infinite_canvas"
+LOG_FILE="$PROJECT_DIR/.app-launch.log"
+PID_FILE="$PROJECT_DIR/.app-pids"
+FRONTEND_URL="http://localhost:3010"
+
+cleanup() {
+    if [ -f "$PID_FILE" ]; then
+        while read -r pid; do
+            kill "$pid" 2>/dev/null
+            wait "$pid" 2>/dev/null
+        done < "$PID_FILE"
+        rm -f "$PID_FILE"
+    fi
+}
+
+trap cleanup EXIT INT TERM
+
+# Kill any existing instances on our ports
+lsof -ti:3010 -ti:3011 2>/dev/null | xargs kill 2>/dev/null
+sleep 1
+
+cd "$PROJECT_DIR" || exit 1
+
+# Start server
+cd server && npm run dev > "$LOG_FILE" 2>&1 &
+echo $! > "$PID_FILE"
+
+# Start frontend
+cd "$PROJECT_DIR/frontend" && npm run dev >> "$LOG_FILE" 2>&1 &
+echo $! >> "$PID_FILE"
+
+# Wait for frontend to be ready
+for i in $(seq 1 30); do
+    if curl -s "$FRONTEND_URL" > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+# Open in default browser
+open "$FRONTEND_URL"
+
+# Keep running until the app is quit
+wait

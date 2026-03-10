@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0f1a"/>
+      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="grid1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <radialGradient id="fade1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:white;stop-opacity:1"/>
+      <stop offset="60%" style="stop-color:white;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:white;stop-opacity:0"/>
+    </radialGradient>
+    <mask id="fadeMask1">
+      <rect width="1024" height="1024" fill="url(#fade1)"/>
+    </mask>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg1)"/>
+  <g mask="url(#fadeMask1)" stroke="url(#grid1)" stroke-width="2.5" fill="none" opacity="0.3">
+    <line x1="192" y1="120" x2="192" y2="904"/>
+    <line x1="312" y1="120" x2="312" y2="904"/>
+    <line x1="432" y1="120" x2="432" y2="904"/>
+    <line x1="512" y1="120" x2="512" y2="904"/>
+    <line x1="592" y1="120" x2="592" y2="904"/>
+    <line x1="712" y1="120" x2="712" y2="904"/>
+    <line x1="832" y1="120" x2="832" y2="904"/>
+    <line x1="120" y1="192" x2="904" y2="192"/>
+    <line x1="120" y1="312" x2="904" y2="312"/>
+    <line x1="120" y1="432" x2="904" y2="432"/>
+    <line x1="120" y1="512" x2="904" y2="512"/>
+    <line x1="120" y1="592" x2="904" y2="592"/>
+    <line x1="120" y1="712" x2="904" y2="712"/>
+    <line x1="120" y1="832" x2="904" y2="832"/>
+  </g>
+  <g mask="url(#fadeMask1)" stroke="url(#grid1)" stroke-width="3.5" fill="none" opacity="0.9">
+    <line x1="512" y1="200" x2="512" y2="824"/>
+    <line x1="200" y1="512" x2="824" y2="512"/>
+  </g>
+  <!-- Center bright node -->
+  <circle cx="512" cy="512" r="16" fill="#8b5cf6"/>
+  <circle cx="512" cy="512" r="8" fill="#c4b5fd"/>
+  <circle cx="512" cy="512" r="32" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.4"/>
+  <!-- Corner expanding dots -->
+  <circle cx="312" cy="312" r="6" fill="#6366f1" opacity="0.7"/>
+  <circle cx="712" cy="312" r="6" fill="#6366f1" opacity="0.7"/>
+  <circle cx="312" cy="712" r="6" fill="#6366f1" opacity="0.7"/>
+  <circle cx="712" cy="712" r="6" fill="#6366f1" opacity="0.7"/>
+  <circle cx="192" cy="192" r="4" fill="#6366f1" opacity="0.3"/>
+  <circle cx="832" cy="192" r="4" fill="#6366f1" opacity="0.3"/>
+  <circle cx="192" cy="832" r="4" fill="#6366f1" opacity="0.3"/>
+  <circle cx="832" cy="832" r="4" fill="#6366f1" opacity="0.3"/>
+</svg>

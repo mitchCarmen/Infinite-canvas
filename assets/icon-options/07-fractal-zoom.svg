@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#020617"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+    <linearGradient id="sq7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg7)"/>
+  <!-- Outermost square - very faint -->
+  <rect x="172" y="172" width="680" height="680" rx="12" fill="none" stroke="#10b981" stroke-width="2" opacity="0.1" transform="rotate(2, 512, 512)"/>
+  <!-- Second square -->
+  <rect x="232" y="232" width="560" height="560" rx="10" fill="none" stroke="#10b981" stroke-width="2" opacity="0.18" transform="rotate(5, 512, 512)"/>
+  <!-- Third square -->
+  <rect x="292" y="292" width="440" height="440" rx="10" fill="none" stroke="#14b8a6" stroke-width="2.5" opacity="0.3" transform="rotate(10, 512, 512)"/>
+  <!-- Fourth square -->
+  <rect x="352" y="352" width="320" height="320" rx="8" fill="none" stroke="#22d3ee" stroke-width="3" opacity="0.5" transform="rotate(17, 512, 512)"/>
+  <!-- Fifth square -->
+  <rect x="412" y="412" width="200" height="200" rx="8" fill="none" stroke="#06b6d4" stroke-width="3.5" opacity="0.7" transform="rotate(26, 512, 512)"/>
+  <!-- Innermost square -->
+  <rect x="462" y="462" width="100" height="100" rx="6" fill="none" stroke="#67e8f9" stroke-width="4" opacity="0.9" transform="rotate(38, 512, 512)"/>
+  <!-- Center point -->
+  <circle cx="512" cy="512" r="6" fill="#a7f3d0"/>
+  <circle cx="512" cy="512" r="3" fill="white"/>
+</svg>
