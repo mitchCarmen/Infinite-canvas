@@ -2,6 +2,7 @@ import React from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
 import { getContrastColor, ensureContrast } from '../../utils/color';
+import NodeBadges from './NodeBadges';
 
 export default function GroupNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 400;
@@ -12,11 +13,12 @@ export default function GroupNode({ data, selected }: NodeProps) {
   const explicitColor = (data.style as Record<string, string>)?.color;
   const color = explicitColor ? ensureContrast(explicitColor, canvasBg) : getContrastColor(canvasBg);
   const fontSize = (data.style as Record<string, string>)?.fontSize ?? '13px';
+  const locked = data.locked === true;
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
   return (
     <div style={{ width, height, position: 'relative' }}>
-      <NodeResizer isVisible={!!selected} minWidth={100} minHeight={80} />
+      <NodeResizer isVisible={!!selected && !locked} minWidth={100} minHeight={80} />
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <rect
           x={1}
@@ -55,6 +57,7 @@ export default function GroupNode({ data, selected }: NodeProps) {
           />
         </div>
       )}
+      <NodeBadges link={null} emoji={null} locked={locked} />
       <Handle type="target" position={Position.Top} id="top-target" />
       <Handle type="source" position={Position.Top} id="top-source" />
       <Handle type="target" position={Position.Bottom} id="bottom-target" />
