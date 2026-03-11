@@ -17,8 +17,12 @@ Local-only infinite whiteboard with MCP server integration. Monorepo: `shared/` 
 | `server/src/data/layout.ts` | Dagre-based auto-layout engine |
 | `frontend/src/api.ts` | REST client for frontend |
 | `frontend/src/components/CanvasView.tsx` | Main canvas component (React Flow) |
+| `frontend/src/components/toolbar/NodeFormattingToolbar.tsx` | Node formatting toolbar (shape, font, color, lock, emoji, link) |
+| `frontend/src/components/nodes/NodeBadges.tsx` | Emoji, link, and lock badge overlays for nodes |
 | `frontend/src/hooks/useBoard.ts` | Board state management hook (React Flow integration) |
+| `frontend/src/hooks/useNodeStyle.ts` | Shared style parsing hook for node components |
 | `frontend/src/hooks/useKeyboardShortcuts.ts` | Keyboard shortcut bindings |
+| `frontend/src/utils/googleFonts.ts` | Google Fonts on-demand loader |
 
 ## How to Run
 
@@ -48,6 +52,11 @@ Boards are stored as individual JSON files in `boards/` directory.
 ## Known Patterns
 
 - In `toFlowNodes` (`useBoard.ts`), `CanvasNode.data` is spread BEFORE explicit properties to ensure top-level fields (`label`, `style`, `width`, `height`, `nodeType`) always take precedence over anything in the custom `data` record. Never reorder the spread to come after these fields.
+- Node style is extracted via `useNodeStyle(data)` — returns fill, borderColor, borderWidth, color, fontSize, fontFamily, fontWeight, textAlign, verticalAlign, locked, link, emoji. All node components use this hook.
+- Node text renders via `<foreignObject>` (not SVG `<text>`) to support rich font/alignment. Flex layout handles horizontal/vertical alignment.
+- Locked nodes: `draggable: false` in toFlowNodes, NodeResizer hidden, double-click edit blocked in CanvasView, toolbar controls disabled.
+- `CanvasNode.data` stores user-defined fields (`locked`, `link`, `emoji`). Internal React Flow fields (`label`, `style`, `width`, `height`, `nodeType`, `boardId`, etc.) are excluded when sending data updates to the server.
+- `UpdateNodeOpts` accepts `type?: NodeType`. Changing type auto-resets dimensions to `DEFAULT_NODE_DIMENSIONS[type]` unless width/height are explicitly provided.
 
 ## Canvas Interactions (Figma/Miro-style)
 
@@ -58,7 +67,8 @@ Boards are stored as individual JSON files in `boards/` directory.
 - **Pinch** → zoom
 - **Cmd+click** → toggle add/remove from selection
 - **Double-click canvas** → create rectangle node
-- **Double-click node** → edit node label
+- **Double-click node** → edit node label (blocked if node is locked)
+- **Select node(s)** → NodeFormattingToolbar appears above selection (shape, font, color, bold, alignment, link, emoji, lock)
 
 ## Node Types
 
