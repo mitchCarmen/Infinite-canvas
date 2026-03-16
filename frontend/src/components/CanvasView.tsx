@@ -473,7 +473,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           </div>
         )}
         {contextMenu && <ContextMenu {...contextMenu} />}
-        {selectedNodes.length > 0 && (
+        {selectedNodes.length > 0 && !isDraggingNode && (
           <NodeFormattingToolbar
             selectedNodes={selectedNodes}
             boardId={boardId}

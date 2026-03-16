@@ -53,24 +53,37 @@ export default function NodeFormattingToolbar({ selectedNodes, boardId, onRefetc
   const { flowToScreenPosition } = useReactFlow();
   const viewport = useViewport();
 
+  const computedStyles = useMemo(() => {
+    const currentType = (() => {
+      const types = selectedNodes.map(n => n.type ?? 'rectangle');
+      return new Set(types).size === 1 ? types[0] : '—';
+    })();
+    return {
+      currentType,
+      currentFontFamily: getSharedStyle(selectedNodes, 'fontFamily') || 'Arial',
+      currentFontSize: getSharedStyle(selectedNodes, 'fontSize') || '14px',
+      currentFontWeight: getSharedStyle(selectedNodes, 'fontWeight') || 'normal',
+      currentTextAlign: getSharedStyle(selectedNodes, 'textAlign') || 'center',
+      currentVerticalAlign: getSharedStyle(selectedNodes, 'verticalAlign') || 'middle',
+      currentFillColor: getSharedStyle(selectedNodes, 'backgroundColor') || '#ffffff',
+      currentBorderColor: getSharedStyle(selectedNodes, 'borderColor') || '#333333',
+      currentTextColor: getSharedStyle(selectedNodes, 'color') || '',
+      currentLink: getSharedData<string>(selectedNodes, 'link'),
+      currentEmoji: getSharedData<string>(selectedNodes, 'emoji'),
+      isLocked: selectedNodes.every(n => (n.data as Record<string, unknown>)?.locked === true),
+    };
+  }, [selectedNodes]);
+
+  const {
+    currentType, currentFontFamily, currentFontSize, currentFontWeight,
+    currentTextAlign, currentVerticalAlign, currentFillColor, currentBorderColor,
+    currentTextColor, currentLink, currentEmoji, isLocked,
+  } = computedStyles;
+
   if (selectedNodes.length === 0) return null;
 
   const bounds = getSelectionBounds(selectedNodes);
   const screenPos = flowToScreenPosition({ x: bounds.x + bounds.width / 2, y: bounds.y });
-
-  // Shared values for multi-select
-  const currentType = (() => { const types = selectedNodes.map(n => n.type ?? 'rectangle'); return new Set(types).size === 1 ? types[0] : '—'; })();
-  const currentFontFamily = getSharedStyle(selectedNodes, 'fontFamily') || 'Arial';
-  const currentFontSize = getSharedStyle(selectedNodes, 'fontSize') || '14px';
-  const currentFontWeight = getSharedStyle(selectedNodes, 'fontWeight') || 'normal';
-  const currentTextAlign = getSharedStyle(selectedNodes, 'textAlign') || 'center';
-  const currentVerticalAlign = getSharedStyle(selectedNodes, 'verticalAlign') || 'middle';
-  const currentFillColor = getSharedStyle(selectedNodes, 'backgroundColor') || '#ffffff';
-  const currentBorderColor = getSharedStyle(selectedNodes, 'borderColor') || '#333333';
-  const currentTextColor = getSharedStyle(selectedNodes, 'color') || '';
-  const currentLink = getSharedData<string>(selectedNodes, 'link');
-  const currentEmoji = getSharedData<string>(selectedNodes, 'emoji');
-  const isLocked = selectedNodes.every(n => (n.data as Record<string, unknown>)?.locked === true);
 
   const toggleDropdown = (id: DropdownId) => {
     setActiveDropdown(prev => prev === id ? null : id);
