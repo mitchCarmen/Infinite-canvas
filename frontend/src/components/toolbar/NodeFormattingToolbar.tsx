@@ -86,7 +86,7 @@ export default function NodeFormattingToolbar({ selectedNodes, boardId, onRefetc
   };
 
   const applyData = async (key: string, value: unknown) => {
-    const INTERNAL_KEYS = new Set(['label', 'style', 'width', 'height', 'nodeType', 'boardId', 'canvasLight', 'isEditing', 'onStartEdit', 'onFinishEdit', 'onCancelEdit']);
+    const INTERNAL_KEYS = new Set(['label', 'style', 'width', 'height', 'nodeType', 'boardId', 'nodeId', 'canvasLight', 'isEditing', 'onStartEdit', 'onFinishEdit', 'onCancelEdit']);
     for (const node of selectedNodes) {
       const rawData = (node.data as Record<string, unknown>) ?? {};
       const cleanData: Record<string, unknown> = {};

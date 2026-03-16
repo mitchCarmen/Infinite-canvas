@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -147,6 +147,28 @@ function CanvasInner({ boardId }: CanvasViewProps) {
 
   useKeyboardShortcuts(shortcutHandlers);
 
+  // Stable ref so onFinishEdit doesn't need refetch in its deps
+  const refetchRef = useRef(refetch);
+  useEffect(() => { refetchRef.current = refetch; }, [refetch]);
+
+  const stableOnStartEdit = useCallback(
+    (nodeId: string) => setEditingNodeId(nodeId),
+    [],
+  );
+
+  const stableOnCancelEdit = useCallback(() => setEditingNodeId(null), []);
+
+  const stableOnFinishEdit = useCallback(
+    async (nodeId: string, newLabel: string, oldLabel: string) => {
+      setEditingNodeId(null);
+      if (newLabel !== oldLabel) {
+        await api.updateNode(boardId, nodeId, { label: newLabel });
+        refetchRef.current();
+      }
+    },
+    [boardId],
+  );
+
   // Enhance nodes with editing state, callbacks, and search dimming
   const enhancedNodes = useMemo(() => {
     return nodes.map((node) => {
@@ -160,21 +182,16 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         data: {
           ...node.data,
           boardId,
+          nodeId: node.id,
           canvasLight,
           isEditing: node.id === editingNodeId,
-          onStartEdit: () => setEditingNodeId(node.id),
-          onFinishEdit: async (newLabel: string) => {
-            setEditingNodeId(null);
-            if (newLabel !== node.data.label) {
-              await api.updateNode(boardId, node.id, { label: newLabel });
-              refetch();
-            }
-          },
-          onCancelEdit: () => setEditingNodeId(null),
+          onStartEdit: stableOnStartEdit,
+          onFinishEdit: stableOnFinishEdit,
+          onCancelEdit: stableOnCancelEdit,
         },
       };
     });
-  }, [nodes, editingNodeId, boardId, refetch, dimmedNodeIds, canvasLight]);
+  }, [nodes, editingNodeId, boardId, dimmedNodeIds, canvasLight, stableOnStartEdit, stableOnFinishEdit, stableOnCancelEdit]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
