@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getContrastColor } from '../utils/color';
 import { loadGoogleFont, isGoogleFont } from '../utils/googleFonts';
 
@@ -37,5 +37,8 @@ export function useNodeStyle(data: Record<string, unknown>): NodeStyleResult {
     if (isGoogleFont(fontFamily)) loadGoogleFont(fontFamily);
   }, [fontFamily]);
 
-  return { fill, borderColor, borderWidth, color, fontSize, fontFamily, fontWeight, textAlign, verticalAlign, locked, link, emoji };
+  return useMemo(
+    () => ({ fill, borderColor, borderWidth, color, fontSize, fontFamily, fontWeight, textAlign, verticalAlign, locked, link, emoji }),
+    [fill, borderColor, borderWidth, color, fontSize, fontFamily, fontWeight, textAlign, verticalAlign, locked, link, emoji],
+  );
 }
