@@ -21,6 +21,7 @@ import { useBoard } from '../hooks/useBoard';
 import { useClipboard } from '../hooks/useClipboard';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSnapToGrid } from '../hooks/useSnapToGrid';
+import { useLineageHighlight } from '../hooks/useLineageHighlight';
 import { useViewportPersistence } from '../hooks/useViewportPersistence';
 import { useExport } from '../hooks/useExport';
 import { api } from '../api';
@@ -55,6 +56,14 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   } = useBoard(boardId);
 
   const { snapToGrid, snapGrid, toggleSnap } = useSnapToGrid();
+
+  const {
+    highlightedEdgeIds,
+    highlightedNodeIds,
+    lineageActive,
+    onEdgeClick: handleLineageEdgeClick,
+    clearHighlight,
+  } = useLineageHighlight(edges);
   const { exportPng, exportSvg } = useExport();
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [activityLogOpen, setActivityLogOpen] = useState(false);
@@ -141,8 +150,15 @@ function CanvasInner({ boardId }: CanvasViewProps) {
       onZoomToFit: () => fitView(),
       onZoomIn: () => zoomIn(),
       onZoomOut: () => zoomOut(),
+      onEscape: () => {
+        if (searchBarOpen) {
+          setSearchBarOpen(false);
+        } else {
+          clearHighlight();
+        }
+      },
     }),
-    [handleDelete, undo, redo, handleSelectAll, handleCopy, handlePaste, handleGroup, fitView, zoomIn, zoomOut],
+    [handleDelete, undo, redo, handleSelectAll, handleCopy, handlePaste, handleGroup, fitView, zoomIn, zoomOut, searchBarOpen, clearHighlight],
   );
 
   useKeyboardShortcuts(shortcutHandlers);
@@ -167,7 +183,9 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   // Enhance nodes with editing state, callbacks, and search dimming
   const enhancedNodes = useMemo(() => {
     return nodes.map((node) => {
-      const isDimmed = dimmedNodeIds.size > 0 && dimmedNodeIds.has(node.id);
+      const isDimmedBySearch = dimmedNodeIds.size > 0 && dimmedNodeIds.has(node.id);
+      const isDimmedByLineage = lineageActive && !highlightedNodeIds.has(node.id);
+      const isDimmed = isDimmedBySearch || isDimmedByLineage;
       return {
         ...node,
         style: {
@@ -185,7 +203,42 @@ function CanvasInner({ boardId }: CanvasViewProps) {
         },
       };
     });
-  }, [nodes, editingNodeId, boardId, dimmedNodeIds, canvasLight, stableOnFinishEdit, stableOnCancelEdit]);
+  }, [nodes, editingNodeId, boardId, dimmedNodeIds, canvasLight, stableOnFinishEdit, stableOnCancelEdit, lineageActive, highlightedNodeIds]);
+
+  const enhancedEdges = useMemo(() => {
+    if (!lineageActive) return edges;
+
+    const accentColor = canvasLight ? '#2b8ae6' : '#5cb8ff';
+
+    return edges.map((edge) => {
+      // Strip non-CSS metadata keys that toFlowEdges passes through in edge.style.
+      // routing/arrowMode have already been consumed to set edge type and markers —
+      // they are not valid CSS and would produce React DOM warnings if spread into style.
+      const { routing, arrowMode, ...cssStyle } = (edge.style ?? {}) as Record<string, unknown>;
+
+      const inLineage = highlightedEdgeIds.has(edge.id);
+      if (inLineage) {
+        return {
+          ...edge,
+          selected: false,
+          style: {
+            ...cssStyle,
+            stroke: accentColor,
+            strokeWidth: 3,
+          },
+        };
+      }
+      return {
+        ...edge,
+        selected: false,
+        style: {
+          ...cssStyle,
+          opacity: 0.2,
+        },
+        labelStyle: { opacity: 0.2 },
+      };
+    });
+  }, [edges, lineageActive, highlightedEdgeIds, canvasLight]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -394,7 +447,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
       <div ref={canvasWrapperRef} style={{ flex: 1, position: 'relative', background: canvasLight ? '#ffffff' : '#1e1e24' }} onDragLeave={onDragLeave}>
         <ReactFlow
           nodes={enhancedNodes}
-          edges={edges}
+          edges={enhancedEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -427,9 +480,9 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           connectionRadius={40}
           isValidConnection={isValidConnection}
           deleteKeyCode={null}
-          onPaneClick={() => setContextMenu(null)}
-          onNodeClick={() => setContextMenu(null)}
-          onEdgeClick={() => setContextMenu(null)}
+          onPaneClick={() => { setContextMenu(null); clearHighlight(); }}
+          onNodeClick={() => { setContextMenu(null); clearHighlight(); }}
+          onEdgeClick={(event, edge) => { setContextMenu(null); handleLineageEdgeClick(event, edge); }}
         >
           <MiniMap
             pannable
