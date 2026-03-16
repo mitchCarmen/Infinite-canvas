@@ -84,6 +84,29 @@ Boards are stored as individual JSON files in `boards/` directory.
 
 rectangle, circle, ellipse, diamond, hexagon, parallelogram, cylinder, triangle, sticky, text, image, group
 
+## Edge Conventions for Sequential/Directional Flows
+
+When creating boards that show directional or sequential flow (flowcharts, pipelines, processes, decision trees), Claude MUST:
+
+1. **Use `step` routing** with `forward` arrowMode on all edges:
+   ```
+   style: { routing: 'step', arrowMode: 'forward' }
+   ```
+
+2. **Match handle positions to flow direction:**
+   - **Left-to-right:** `sourceHandle: 'right-source'`, `targetHandle: 'left-target'`
+   - **Top-to-bottom:** `sourceHandle: 'bottom-source'`, `targetHandle: 'top-target'`
+   - **Right-to-left:** `sourceHandle: 'left-source'`, `targetHandle: 'right-target'`
+   - **Bottom-to-top:** `sourceHandle: 'top-source'`, `targetHandle: 'bottom-target'`
+
+3. **Space nodes ≥200px apart** in the flow direction for clean step-routed paths
+
+4. **Use `auto_layout`** with matching direction (`LR`, `TB`, etc.) when laying out the board
+
+5. **One edge per node pair** — the system does not allow multiple edges between the same source/target pair, even on different handles
+
+The goal is circuit-board aesthetics: clean right-angle routing, inputs on the approach side, outputs on the departure side, and the viewer's eye follows the sequence naturally.
+
 ## Testing
 
 Tests use vitest. Test files are colocated in `__tests__/` directories:
