@@ -256,4 +256,237 @@ describe('REST API', () => {
     const updated = await res.json();
     expect(updated.nodes).toHaveLength(2);
   });
+
+  // ── Actor Attribution ─────────────────────────────────────────────
+  // Every REST mutation must record actor as 'user', never 'claude'.
+  // Mirror of the MCP actor tests — both sides of the contract matter.
+
+  describe('Actor attribution', () => {
+    it('create_board records actor as user', async () => {
+      const res = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Actor Test' }),
+      });
+      const board = await res.json();
+      expect(board.activityLog).toHaveLength(1);
+      expect(board.activityLog[0].actor).toBe('user');
+      expect(board.activityLog[0].action).toBe('created_board');
+    });
+
+    it('create_node records actor as user', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test' }),
+      });
+      const board = await boardRes.json();
+      const res = await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'N' }),
+      });
+      const updated = await res.json();
+      const entry = updated.activityLog.find((e: any) => e.action === 'created_node');
+      expect(entry).toBeDefined();
+      expect(entry.actor).toBe('user');
+    });
+
+    it('update_node records actor as user', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test' }),
+      });
+      const board = await boardRes.json();
+      const nodeRes = await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'Old' }),
+      });
+      const withNode = await nodeRes.json();
+      const nodeId = withNode.nodes[0].id;
+
+      const res = await fetch(`${baseUrl}/api/boards/${board.id}/nodes/${nodeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: 'New' }),
+      });
+      const updated = await res.json();
+      const entry = updated.activityLog.find((e: any) => e.action === 'updated_node');
+      expect(entry).toBeDefined();
+      expect(entry.actor).toBe('user');
+    });
+
+    it('delete_node records actor as user', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test' }),
+      });
+      const board = await boardRes.json();
+      const nodeRes = await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'Gone' }),
+      });
+      const withNode = await nodeRes.json();
+      const nodeId = withNode.nodes[0].id;
+
+      const res = await fetch(`${baseUrl}/api/boards/${board.id}/nodes/${nodeId}`, {
+        method: 'DELETE',
+      });
+      const updated = await res.json();
+      const entry = updated.activityLog.find((e: any) => e.action === 'deleted_node');
+      expect(entry).toBeDefined();
+      expect(entry.actor).toBe('user');
+    });
+
+    it('create_edge records actor as user', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test' }),
+      });
+      const board = await boardRes.json();
+      await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'A' }),
+      });
+      const b2Res = await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'B' }),
+      });
+      const b2 = await b2Res.json();
+
+      const res = await fetch(`${baseUrl}/api/boards/${board.id}/edges`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: b2.nodes[0].id, target: b2.nodes[1].id }),
+      });
+      const updated = await res.json();
+      const entry = updated.activityLog.find((e: any) => e.action === 'created_edge');
+      expect(entry).toBeDefined();
+      expect(entry.actor).toBe('user');
+    });
+
+    it('duplicate_board records actor as user', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Original' }),
+      });
+      const board = await boardRes.json();
+
+      const res = await fetch(`${baseUrl}/api/boards/${board.id}/duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newName: 'Copy' }),
+      });
+      const dup = await res.json();
+      expect(dup.activityLog).toHaveLength(1);
+      expect(dup.activityLog[0].actor).toBe('user');
+      expect(dup.activityLog[0].action).toBe('duplicated_board');
+    });
+
+    it('import_mermaid records all entries as user', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Mermaid Test' }),
+      });
+      const board = await boardRes.json();
+
+      const res = await fetch(`${baseUrl}/api/boards/${board.id}/import-mermaid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mermaidSyntax: 'graph TD\n  A[Start] --> B[End]' }),
+      });
+      const updated = await res.json();
+      expect(updated.activityLog.length).toBeGreaterThan(1);
+      const nonUser = updated.activityLog.filter((e: any) => e.actor !== 'user');
+      expect(nonUser).toEqual([]);
+    });
+
+    it('auto_layout records actor as user', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Layout Test' }),
+      });
+      const board = await boardRes.json();
+      await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'A' }),
+      });
+      await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'B' }),
+      });
+
+      const res = await fetch(`${baseUrl}/api/boards/${board.id}/auto-layout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ direction: 'TB' }),
+      });
+      const updated = await res.json();
+      const entry = updated.activityLog.find((e: any) => e.action === 'auto_layout');
+      expect(entry).toBeDefined();
+      expect(entry.actor).toBe('user');
+    });
+
+    it('full REST workflow never produces a claude actor entry', async () => {
+      const boardRes = await fetch(`${baseUrl}/api/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Full Workflow' }),
+      });
+      const board = await boardRes.json();
+
+      // Create two nodes
+      await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'rectangle', label: 'A' }),
+      });
+      const b2Res = await fetch(`${baseUrl}/api/boards/${board.id}/nodes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'circle', label: 'B' }),
+      });
+      const b2 = await b2Res.json();
+
+      // Update a node
+      await fetch(`${baseUrl}/api/boards/${board.id}/nodes/${b2.nodes[0].id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: 'A2' }),
+      });
+
+      // Create edge
+      await fetch(`${baseUrl}/api/boards/${board.id}/edges`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: b2.nodes[0].id, target: b2.nodes[1].id }),
+      });
+
+      // Auto-layout
+      await fetch(`${baseUrl}/api/boards/${board.id}/auto-layout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ direction: 'LR' }),
+      });
+
+      // Read final state
+      const readRes = await fetch(`${baseUrl}/api/boards/${board.id}`);
+      const final = await readRes.json();
+      expect(final.activityLog.length).toBeGreaterThan(4);
+      expect(final.activityLog.every((e: any) => e.actor === 'user')).toBe(true);
+      expect(final.activityLog.some((e: any) => e.actor === 'claude')).toBe(false);
+    });
+  });
 });
