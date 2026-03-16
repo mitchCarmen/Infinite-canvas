@@ -22,6 +22,7 @@ Local-only infinite whiteboard with MCP server integration. Monorepo: `shared/` 
 | `frontend/src/hooks/useBoard.ts` | Board state management hook (React Flow integration) |
 | `frontend/src/hooks/useNodeStyle.ts` | Shared style parsing hook for node components (memoized return) |
 | `frontend/src/hooks/useKeyboardShortcuts.ts` | Keyboard shortcut bindings |
+| `frontend/src/hooks/useLineageHighlight.ts` | BFS lineage tracer; returns highlightedEdgeIds, highlightedNodeIds, lineageActive, onEdgeClick, clearHighlight |
 | `frontend/src/components/nodes/areNodePropsEqual.ts` | Custom React.memo comparator for node components (ignore-list approach) |
 | `frontend/src/utils/googleFonts.ts` | Google Fonts on-demand loader |
 
@@ -79,6 +80,19 @@ Boards are stored as individual JSON files in `boards/` directory.
 - **Double-click canvas** → create rectangle node
 - **Double-click node** → edit node label (blocked if node is locked)
 - **Select node(s)** → NodeFormattingToolbar appears above selection (shape, font, color, bold, alignment, link, emoji, lock)
+- **Left-click edge** → activate lineage highlight: traces full upstream/downstream chain via BFS, highlights in bright blue, dims non-lineage elements to 0.2 opacity
+- **Click canvas / click node / Escape** → clear lineage highlight (Escape closes search bar first if open)
+
+## Edge Lineage Highlight
+
+`useLineageHighlight(edges)` is called in `CanvasView` and returns `{ highlightedEdgeIds, highlightedNodeIds, lineageActive, onEdgeClick, clearHighlight }`.
+
+- BFS runs both backward (ancestor edges from source node) and forward (descendant edges from target node). Cycle protection via a visited-node set.
+- `CanvasView` builds `enhancedEdges` via `useMemo`: lineage edges get `stroke` + `strokeWidth: 3` merged into their existing style; non-lineage edges get `opacity: 0.2`. Edge labels on non-lineage edges get `labelStyle: { opacity: 0.2 }`. When lineage is active, `selected: false` is set on all edges to suppress React Flow's default selection styling.
+- Accent colors: dark canvas `#5cb8ff`, light canvas `#2b8ae6`.
+- Node dimming combines search dimming and lineage dimming: `isDimmed = (dimmedNodeIds.size > 0 && dimmedNodeIds.has(node.id)) || (lineageActive && !highlightedNodeIds.has(node.id))`.
+- Right-click context menu on an edge does NOT trigger lineage — only left-click does.
+- No backend changes. Purely frontend presentation logic; nothing persists to board JSON.
 
 ## Node Types
 

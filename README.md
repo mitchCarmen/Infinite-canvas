@@ -92,6 +92,10 @@ cd server && npm run build
 cd frontend && npm run build
 ```
 
+## Features
+
+- **Edge Lineage Highlight** — click any edge to trace the full upstream/downstream lineage chain. All edges and nodes in the chain are highlighted in bright blue; everything else dims to 20% opacity. Click the canvas, click a node, or press Escape to clear. BFS traversal handles fan-out/fan-in and cycle protection automatically.
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -108,3 +112,4 @@ cd frontend && npm run build
 | `Cmd/Ctrl + 0` | Zoom to fit |
 | `+` / `=` | Zoom in |
 | `-` | Zoom out |
+| `Escape` | Clear edge lineage highlight (or close search bar if open) |
