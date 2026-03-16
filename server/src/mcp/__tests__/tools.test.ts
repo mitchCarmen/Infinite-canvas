@@ -113,6 +113,76 @@ describe('MCP Tools', () => {
     expect(b.edges).toHaveLength(0);
   });
 
+  it('create_edge persists sourceHandle and targetHandle', async () => {
+    const board = await handler('create_board', { name: 'Test' });
+    let b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'A' });
+    b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'B' });
+    const [nodeA, nodeB] = b.nodes;
+    b = await handler('create_edge', {
+      boardId: board.id,
+      source: nodeA.id,
+      target: nodeB.id,
+      sourceHandle: 'right-source',
+      targetHandle: 'left-target',
+    });
+    expect(b.edges).toHaveLength(1);
+    expect(b.edges[0].sourceHandle).toBe('right-source');
+    expect(b.edges[0].targetHandle).toBe('left-target');
+  });
+
+  it('create_edge persists style with routing and arrowMode', async () => {
+    const board = await handler('create_board', { name: 'Test' });
+    let b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'A' });
+    b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'B' });
+    const [nodeA, nodeB] = b.nodes;
+    b = await handler('create_edge', {
+      boardId: board.id,
+      source: nodeA.id,
+      target: nodeB.id,
+      style: { routing: 'step', arrowMode: 'forward' },
+    });
+    expect(b.edges).toHaveLength(1);
+    expect(b.edges[0].style).toEqual({ routing: 'step', arrowMode: 'forward' });
+  });
+
+  it('create_edge without handles still works (backward compatibility)', async () => {
+    const board = await handler('create_board', { name: 'Test' });
+    let b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'A' });
+    b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'B' });
+    const [nodeA, nodeB] = b.nodes;
+    b = await handler('create_edge', {
+      boardId: board.id,
+      source: nodeA.id,
+      target: nodeB.id,
+    });
+    expect(b.edges).toHaveLength(1);
+    expect(b.edges[0].sourceHandle).toBeUndefined();
+    expect(b.edges[0].targetHandle).toBeUndefined();
+    expect(b.edges[0].style).toBeUndefined();
+  });
+
+  it('create_edge with all params matches CLAUDE.md convention', async () => {
+    const board = await handler('create_board', { name: 'Test' });
+    let b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'Start' });
+    b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'End' });
+    const [nodeA, nodeB] = b.nodes;
+    b = await handler('create_edge', {
+      boardId: board.id,
+      source: nodeA.id,
+      target: nodeB.id,
+      label: 'next',
+      sourceHandle: 'right-source',
+      targetHandle: 'left-target',
+      style: { routing: 'step', arrowMode: 'forward' },
+    });
+    expect(b.edges).toHaveLength(1);
+    const edge = b.edges[0];
+    expect(edge.label).toBe('next');
+    expect(edge.sourceHandle).toBe('right-source');
+    expect(edge.targetHandle).toBe('left-target');
+    expect(edge.style).toEqual({ routing: 'step', arrowMode: 'forward' });
+  });
+
   it('create_group wraps nodes', async () => {
     const board = await handler('create_board', { name: 'Test' });
     let b = await handler('create_node', { boardId: board.id, type: 'rectangle', label: 'A' });
