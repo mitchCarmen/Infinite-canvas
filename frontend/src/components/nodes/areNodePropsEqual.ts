@@ -5,6 +5,11 @@ import type { NodeProps } from '@xyflow/react';
  * IGNORE-list approach: callbacks and transient internal props are skipped,
  * all other data keys are compared by reference (===).
  *
+ * Scope: only `selected` and `data` fields are compared. Top-level NodeProps
+ * (positionAbsoluteX/Y, dragging, zIndex, width, height) are intentionally
+ * not compared — no current node component reads them. If that changes, add
+ * comparisons here.
+ *
  * Maintenance contract:
  * - New VISUAL data fields are compared automatically (safe by default).
  * - New INTERNAL/CALLBACK fields must be added to IGNORED_DATA_KEYS,

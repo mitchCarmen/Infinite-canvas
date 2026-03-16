@@ -151,11 +151,6 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   const refetchRef = useRef(refetch);
   useEffect(() => { refetchRef.current = refetch; }, [refetch]);
 
-  const stableOnStartEdit = useCallback(
-    (nodeId: string) => setEditingNodeId(nodeId),
-    [],
-  );
-
   const stableOnCancelEdit = useCallback(() => setEditingNodeId(null), []);
 
   const stableOnFinishEdit = useCallback(
@@ -185,13 +180,12 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           nodeId: node.id,
           canvasLight,
           isEditing: node.id === editingNodeId,
-          onStartEdit: stableOnStartEdit,
           onFinishEdit: stableOnFinishEdit,
           onCancelEdit: stableOnCancelEdit,
         },
       };
     });
-  }, [nodes, editingNodeId, boardId, dimmedNodeIds, canvasLight, stableOnStartEdit, stableOnFinishEdit, stableOnCancelEdit]);
+  }, [nodes, editingNodeId, boardId, dimmedNodeIds, canvasLight, stableOnFinishEdit, stableOnCancelEdit]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();

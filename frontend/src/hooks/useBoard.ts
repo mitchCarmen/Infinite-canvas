@@ -98,6 +98,7 @@ export function useBoard(boardId: string) {
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (thumbnailDebounceRef.current) clearTimeout(thumbnailDebounceRef.current);
     };
   }, []);
 
@@ -167,7 +168,7 @@ export function useBoard(boardId: string) {
         captureThumbnail();
       }
     },
-    [onNodesChangeBase, boardId, setNodes],
+    [onNodesChangeBase, boardId, setNodes, captureThumbnail],
   );
 
   const onEdgesChange: OnEdgesChange = onEdgesChangeBase;

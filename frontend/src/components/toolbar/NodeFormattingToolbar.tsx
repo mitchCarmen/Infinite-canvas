@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useReactFlow, useViewport, type Node } from '@xyflow/react';
+import { useReactFlow, type Node } from '@xyflow/react';
 import type { NodeType } from '@shared/types';
 import { DEFAULT_NODE_DIMENSIONS } from '@shared/types';
 import { api } from '../../api';
@@ -51,7 +51,6 @@ export default function NodeFormattingToolbar({ selectedNodes, boardId, onRefetc
   const [activeDropdown, setActiveDropdown] = useState<DropdownId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const { flowToScreenPosition } = useReactFlow();
-  const viewport = useViewport();
 
   const computedStyles = useMemo(() => {
     const currentType = (() => {

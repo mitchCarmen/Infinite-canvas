@@ -4,7 +4,6 @@ interface NodeEditData {
   label?: unknown;
   nodeId?: unknown;
   isEditing?: unknown;
-  onStartEdit?: unknown;
   onFinishEdit?: unknown;
   onCancelEdit?: unknown;
 }
