@@ -8,35 +8,60 @@ export function createMcpToolHandler(boardsDir: string): ToolHandler {
   const store = new BoardStore(boardsDir);
   const actor = 'claude' as const;
 
+  async function enrichBoardError<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (err: any) {
+      if (err.message === 'Board not found') {
+        const boards = await store.listBoards();
+        throw new Error(
+          `Board not found in BOARDS_DIR (${boardsDir}). ${boards.length} board(s) available. Verify the MCP server's BOARDS_DIR matches the Express server.`
+        );
+      }
+      throw err;
+    }
+  }
+
   return async (toolName: string, args: Record<string, any>): Promise<any> => {
     switch (toolName) {
       case 'create_board':
         return store.createBoard(args.name, actor, args.description);
 
-      case 'list_boards':
-        return store.listBoards();
+      case 'list_boards': {
+        const boards = await store.listBoards();
+        if (boards.length === 0) {
+          return {
+            boards: [],
+            boardsDir,
+            hint: 'No boards found. If boards exist in the UI, the MCP BOARDS_DIR may be misconfigured.',
+          };
+        }
+        return boards;
+      }
 
       case 'read_board':
-        return store.readBoard(args.boardId);
+        return enrichBoardError(() => store.readBoard(args.boardId));
 
       case 'delete_board':
-        await store.deleteBoard(args.boardId);
-        return { success: true };
+        return enrichBoardError(async () => {
+          await store.deleteBoard(args.boardId);
+          return { success: true };
+        });
 
       case 'duplicate_board':
-        return store.duplicateBoard(args.boardId, actor, args.newName);
+        return enrichBoardError(() => store.duplicateBoard(args.boardId, actor, args.newName));
 
       case 'create_node':
-        return store.createNode(args.boardId, {
+        return enrichBoardError(() => store.createNode(args.boardId, {
           type: args.type,
           label: args.label,
           x: args.x,
           y: args.y,
           style: args.style,
-        }, actor);
+        }, actor));
 
       case 'update_node':
-        return store.updateNode(args.boardId, args.nodeId, {
+        return enrichBoardError(() => store.updateNode(args.boardId, args.nodeId, {
           type: args.type,
           label: args.label,
           x: args.x,
@@ -45,60 +70,61 @@ export function createMcpToolHandler(boardsDir: string): ToolHandler {
           height: args.height,
           style: args.style,
           data: args.data,
-        }, actor);
+        }, actor));
 
       case 'delete_node':
-        return store.deleteNode(args.boardId, args.nodeId, actor);
+        return enrichBoardError(() => store.deleteNode(args.boardId, args.nodeId, actor));
 
       case 'create_edge':
-        return store.createEdge(
+        return enrichBoardError(() => store.createEdge(
           args.boardId, args.source, args.target, actor,
           args.label, args.style, args.sourceHandle, args.targetHandle,
-        );
+        ));
 
       case 'delete_edge':
-        return store.deleteEdge(args.boardId, args.edgeId, actor);
+        return enrichBoardError(() => store.deleteEdge(args.boardId, args.edgeId, actor));
 
       case 'create_group':
-        return store.createGroup(args.boardId, args.label, args.nodeIds, actor);
+        return enrichBoardError(() => store.createGroup(args.boardId, args.label, args.nodeIds, actor));
 
-      case 'import_mermaid': {
-        const parsed = parseMermaid(args.mermaidSyntax);
-        const boardId = args.boardId;
+      case 'import_mermaid':
+        return enrichBoardError(async () => {
+          const parsed = parseMermaid(args.mermaidSyntax);
+          const boardId = args.boardId;
 
-        // Build mapping from mermaid node IDs to real UUIDs
-        const idMap = new Map<string, string>();
-        let board = await store.readBoard(boardId);
+          const idMap = new Map<string, string>();
+          let board = await store.readBoard(boardId);
 
-        for (const node of parsed.nodes) {
-          board = await store.createNode(boardId, {
-            type: node.type,
-            label: node.label,
-            x: node.x,
-            y: node.y,
-          }, actor);
-          const createdNode = board.nodes[board.nodes.length - 1];
-          idMap.set(node.id, createdNode.id);
-        }
-
-        for (const edge of parsed.edges) {
-          const source = idMap.get(edge.source);
-          const target = idMap.get(edge.target);
-          if (source && target) {
-            board = await store.createEdge(boardId, source, target, actor, edge.label);
+          for (const node of parsed.nodes) {
+            board = await store.createNode(boardId, {
+              type: node.type,
+              label: node.label,
+              x: node.x,
+              y: node.y,
+            }, actor);
+            const createdNode = board.nodes[board.nodes.length - 1];
+            idMap.set(node.id, createdNode.id);
           }
-        }
 
-        return board;
-      }
+          for (const edge of parsed.edges) {
+            const source = idMap.get(edge.source);
+            const target = idMap.get(edge.target);
+            if (source && target) {
+              board = await store.createEdge(boardId, source, target, actor, edge.label);
+            }
+          }
+
+          return board;
+        });
 
       case 'auto_layout':
-        return store.autoLayoutBoard(args.boardId, args.direction || 'TB', actor);
+        return enrichBoardError(() => store.autoLayoutBoard(args.boardId, args.direction || 'TB', actor));
 
-      case 'export_board': {
-        const board = await store.readBoard(args.boardId);
-        return { board, format: args.format || 'json' };
-      }
+      case 'export_board':
+        return enrichBoardError(async () => {
+          const board = await store.readBoard(args.boardId);
+          return { board, format: args.format || 'json' };
+        });
 
       default:
         throw new Error(`Unknown tool: ${toolName}`);
