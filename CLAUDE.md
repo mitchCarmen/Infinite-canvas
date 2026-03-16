@@ -8,7 +8,7 @@ Local-only infinite whiteboard with MCP server integration. Monorepo: `shared/` 
 
 | File | Purpose |
 |------|---------|
-| `shared/types.ts` | Core types: Board, CanvasNode, CanvasEdge, ActivityEntry, NodeType |
+| `shared/types.ts` | Core types: Board, CanvasNode, CanvasEdge, ActivityEntry, NodeType, VALID_SOURCE/TARGET_HANDLES |
 | `server/src/data/boards.ts` | BoardStore class - all CRUD, layout, persistence (JSON files) |
 | `server/src/api/routes.ts` | Express REST API (createApp factory) |
 | `server/src/mcp/tools.ts` | MCP tool handler (createMcpToolHandler factory) |
@@ -37,7 +37,7 @@ cd server && npm run build  # Compile TypeScript
 
 - **Board**: id, name, description, nodes[], edges[], activityLog[], createdAt, updatedAt
 - **CanvasNode**: id, type (12 types), label, x, y, width, height, zIndex, style?, parentId?, data?
-- **CanvasEdge**: id, source, target, label?, style?
+- **CanvasEdge**: id, source, target, sourceHandle?, targetHandle?, label?, style?
 - **ActivityEntry**: id, timestamp, actor ('user' | 'claude'), action, summary, details?
 
 Boards are stored as individual JSON files in `boards/` directory.
