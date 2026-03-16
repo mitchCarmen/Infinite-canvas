@@ -13,6 +13,7 @@ interface ShortcutHandlers {
   onZoomToFit: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onEscape?: () => void;  // optional — not all consumers need it
 }
 
 function isInputFocused(): boolean {
@@ -27,6 +28,12 @@ function isInputFocused(): boolean {
 export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Escape always fires regardless of focus (meta-dismissal key)
+      if (event.key === 'Escape') {
+        handlers.onEscape?.();
+        return;
+      }
+
       // Skip when typing in form fields
       if (isInputFocused()) return;
 
