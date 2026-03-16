@@ -3,8 +3,9 @@ import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
 import { getContrastColor, ensureContrast } from '../../utils/color';
 import NodeBadges from './NodeBadges';
+import { areNodePropsEqual } from './areNodePropsEqual';
 
-export default function GroupNode({ data, selected }: NodeProps) {
+const GroupNode = React.memo(function GroupNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 400;
   const height = (data.height as number) ?? 300;
   const fill = (data.style as Record<string, string>)?.backgroundColor ?? 'rgba(200, 200, 200, 0.1)';
@@ -68,4 +69,6 @@ export default function GroupNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Right} id="right-source" />
     </div>
   );
-}
+}, areNodePropsEqual);
+
+export default GroupNode;

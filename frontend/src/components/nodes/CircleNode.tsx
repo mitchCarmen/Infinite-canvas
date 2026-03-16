@@ -3,8 +3,9 @@ import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
 import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
+import { areNodePropsEqual } from './areNodePropsEqual';
 
-export default function CircleNode({ data, selected }: NodeProps) {
+const CircleNode = React.memo(function CircleNode({ data, selected }: NodeProps) {
   const w = (data.width as number) ?? 100;
   const h = (data.height as number) ?? 100;
   const diameter = Math.min(w, h);
@@ -67,4 +68,6 @@ export default function CircleNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Right} id="right-source" />
     </div>
   );
-}
+}, areNodePropsEqual);
+
+export default CircleNode;

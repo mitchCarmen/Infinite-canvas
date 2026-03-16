@@ -3,8 +3,9 @@ import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
 import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
+import { areNodePropsEqual } from './areNodePropsEqual';
 
-export default function DiamondNode({ data, selected }: NodeProps) {
+const DiamondNode = React.memo(function DiamondNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 120;
   const height = (data.height as number) ?? 120;
   const {
@@ -62,4 +63,6 @@ export default function DiamondNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Right} id="right-source" />
     </div>
   );
-}
+}, areNodePropsEqual);
+
+export default DiamondNode;

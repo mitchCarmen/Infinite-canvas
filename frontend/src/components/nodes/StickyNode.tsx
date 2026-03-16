@@ -3,8 +3,9 @@ import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useNodeEdit } from './useNodeEdit';
 import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
+import { areNodePropsEqual } from './areNodePropsEqual';
 
-export default function StickyNode({ data, selected }: NodeProps) {
+const StickyNode = React.memo(function StickyNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 200;
   const height = (data.height as number) ?? 200;
   const {
@@ -85,4 +86,6 @@ export default function StickyNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Right} id="right-source" />
     </div>
   );
-}
+}, areNodePropsEqual);
+
+export default StickyNode;

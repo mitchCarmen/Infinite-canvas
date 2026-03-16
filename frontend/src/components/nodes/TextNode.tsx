@@ -4,8 +4,9 @@ import { useNodeEdit } from './useNodeEdit';
 import { useNodeStyle } from '../../hooks/useNodeStyle';
 import { ensureContrast } from '../../utils/color';
 import NodeBadges from './NodeBadges';
+import { areNodePropsEqual } from './areNodePropsEqual';
 
-export default function TextNode({ data, selected }: NodeProps) {
+const TextNode = React.memo(function TextNode({ data, selected }: NodeProps) {
   const width = (data.width as number) ?? 150;
   const height = (data.height as number) ?? 40;
   const canvasBg = data.canvasLight ? '#ffffff' : '#1e1e24';
@@ -59,4 +60,6 @@ export default function TextNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Right} id="right-source" />
     </div>
   );
-}
+}, areNodePropsEqual);
+
+export default TextNode;

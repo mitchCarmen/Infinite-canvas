@@ -6,7 +6,7 @@ interface NodeBadgesProps {
   locked: boolean;
 }
 
-export default function NodeBadges({ link, emoji, locked }: NodeBadgesProps) {
+const NodeBadges = React.memo(function NodeBadges({ link, emoji, locked }: NodeBadgesProps) {
   return (
     <>
       {emoji && (
@@ -40,4 +40,6 @@ export default function NodeBadges({ link, emoji, locked }: NodeBadgesProps) {
       )}
     </>
   );
-}
+});
+
+export default NodeBadges;
