@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, type MouseEvent } from 'react';
 import type { Edge } from '@xyflow/react';
 
 interface AdjacencyEntry {
@@ -80,7 +80,7 @@ export function useLineageHighlight(edges: Edge[]) {
   const lineageActive = highlightedEdgeIds.size > 0;
 
   const onEdgeClick = useCallback(
-    (_event: React.MouseEvent, edge: Edge) => {
+    (_event: MouseEvent, edge: Edge) => {
       const { edgeIds, nodeIds } = traceLineage(edge, adjacencyMap);
       setHighlightedEdgeIds(edgeIds);
       setHighlightedNodeIds(nodeIds);
@@ -88,13 +88,10 @@ export function useLineageHighlight(edges: Edge[]) {
     [adjacencyMap],
   );
 
-  // Stable empty set to avoid unnecessary memo recalculations
-  const EMPTY = useMemo(() => new Set<string>(), []);
-
   const clearHighlight = useCallback(() => {
-    setHighlightedEdgeIds(EMPTY);
-    setHighlightedNodeIds(EMPTY);
-  }, [EMPTY]);
+    setHighlightedEdgeIds(new Set());
+    setHighlightedNodeIds(new Set());
+  }, []);
 
   return { highlightedEdgeIds, highlightedNodeIds, lineageActive, onEdgeClick, clearHighlight };
 }
