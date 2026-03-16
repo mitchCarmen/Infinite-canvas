@@ -92,7 +92,15 @@ export function useBoard(boardId: string) {
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const movedIdsRef = useRef<Set<string>>(new Set());
   const thumbnailDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const { takeSnapshot, undo: undoAction, redo: redoAction, canUndo, canRedo } = useUndoRedo();
   const initialLoadDone = useRef(false);
 
@@ -130,13 +138,6 @@ export function useBoard(boardId: string) {
     }, 2000);
   }, [boardId]);
 
-  // Trigger thumbnail after board loads with nodes
-  useEffect(() => {
-    if (!loading && nodes.length > 0) {
-      captureThumbnail();
-    }
-  }, [loading, nodes.length, captureThumbnail]);
-
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
       onNodesChangeBase(changes);
@@ -146,15 +147,20 @@ export function useBoard(boardId: string) {
       );
 
       if (positionDone) {
+        for (const c of changes) {
+          if (c.type === 'position') movedIdsRef.current.add(c.id);
+        }
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
+          const movedIds = movedIdsRef.current;
+          movedIdsRef.current = new Set();
           setNodes((currentNodes) => {
-            const updates = currentNodes.map((n) => ({
-              id: n.id,
-              x: n.position.x,
-              y: n.position.y,
-            }));
-            api.bulkUpdateNodes(boardId, updates).catch(console.error);
+            const updates = currentNodes
+              .filter((n) => movedIds.has(n.id))
+              .map((n) => ({ id: n.id, x: n.position.x, y: n.position.y }));
+            if (updates.length > 0) {
+              api.bulkUpdateNodes(boardId, updates).catch(console.error);
+            }
             return currentNodes;
           });
         }, 300);
