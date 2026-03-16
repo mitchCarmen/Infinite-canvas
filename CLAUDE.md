@@ -20,8 +20,9 @@ Local-only infinite whiteboard with MCP server integration. Monorepo: `shared/` 
 | `frontend/src/components/toolbar/NodeFormattingToolbar.tsx` | Node formatting toolbar (shape, font, color, lock, emoji, link) |
 | `frontend/src/components/nodes/NodeBadges.tsx` | Emoji, link, and lock badge overlays for nodes |
 | `frontend/src/hooks/useBoard.ts` | Board state management hook (React Flow integration) |
-| `frontend/src/hooks/useNodeStyle.ts` | Shared style parsing hook for node components |
+| `frontend/src/hooks/useNodeStyle.ts` | Shared style parsing hook for node components (memoized return) |
 | `frontend/src/hooks/useKeyboardShortcuts.ts` | Keyboard shortcut bindings |
+| `frontend/src/components/nodes/areNodePropsEqual.ts` | Custom React.memo comparator for node components (ignore-list approach) |
 | `frontend/src/utils/googleFonts.ts` | Google Fonts on-demand loader |
 
 ## How to Run
@@ -57,6 +58,15 @@ Boards are stored as individual JSON files in `boards/` directory.
 - Locked nodes: `draggable: false` in toFlowNodes, NodeResizer hidden, double-click edit blocked in CanvasView, toolbar controls disabled.
 - `CanvasNode.data` stores user-defined fields (`locked`, `link`, `emoji`). Internal React Flow fields (`label`, `style`, `width`, `height`, `nodeType`, `boardId`, etc.) are excluded when sending data updates to the server.
 - `UpdateNodeOpts` accepts `type?: NodeType`. Changing type auto-resets dimensions to `DEFAULT_NODE_DIMENSIONS[type]` unless width/height are explicitly provided.
+
+## Performance Patterns
+
+- **`useNodeStyle`** returns a `useMemo`'d object — stable reference when underlying primitives haven't changed.
+- **All 12 node components + `NodeBadges`** are wrapped in `React.memo`. Node components use a custom `areNodePropsEqual` comparator (ignore-list approach: callbacks and transient props like `boardId`, `nodeId` are skipped; all other `data` keys compared by `===`). `NodeBadges` uses default shallow comparison (all props are primitives).
+- **`enhancedNodes` callbacks** (`onFinishEdit`, `onCancelEdit`) are stable `useCallback` refs. `onFinishEdit` captures `refetch` via `refetchRef` (not in its dep array) to avoid invalidating the callback on every board fetch. Callbacks take `nodeId` explicitly — `useNodeEdit` passes it through.
+- **`useBoard` bulk updates** only send positions for nodes that actually moved (tracked via `movedIdsRef`), not all nodes. Initial thumbnail capture is deferred to first drag-end.
+- **`NodeFormattingToolbar`** does NOT subscribe to `useViewport()` — this was removed to prevent pan/zoom re-renders. Position updates come from `flowToScreenPosition()` via `useReactFlow()`. Style computations are `useMemo`'d on `selectedNodes`. Toolbar is unmounted during drag (`!isDraggingNode` guard in CanvasView).
+- **`areNodePropsEqual` scope**: only compares `selected` and `data` fields. Top-level `NodeProps` (positionAbsoluteX/Y, dragging, zIndex) are intentionally not compared — no node component reads them. New visual data fields are compared automatically (safe by default); new internal/callback fields must be added to `IGNORED_DATA_KEYS`.
 
 ## Canvas Interactions (Figma/Miro-style)
 
