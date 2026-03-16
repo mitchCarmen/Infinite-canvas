@@ -220,7 +220,6 @@ function CanvasInner({ boardId }: CanvasViewProps) {
       if (inLineage) {
         return {
           ...edge,
-          selected: false,
           style: {
             ...cssStyle,
             stroke: accentColor,
@@ -230,7 +229,6 @@ function CanvasInner({ boardId }: CanvasViewProps) {
       }
       return {
         ...edge,
-        selected: false,
         style: {
           ...cssStyle,
           opacity: 0.2,
