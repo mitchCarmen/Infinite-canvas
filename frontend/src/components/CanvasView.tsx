@@ -324,6 +324,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   // Double-click on canvas creates a new rectangle node
   const onPaneDoubleClick = useCallback(
     async (event: React.MouseEvent) => {
+      if ((event.target as HTMLElement).closest('.react-flow__node')) return;
       const flowPos = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
