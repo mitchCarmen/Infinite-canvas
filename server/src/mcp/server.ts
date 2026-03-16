@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { VALID_SOURCE_HANDLES, VALID_TARGET_HANDLES } from '../../../shared/types.js';
 import { createMcpToolHandler } from './tools.js';
 
 const NODE_TYPES = [
@@ -118,12 +119,15 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   // 9. create_edge
   mcpServer.tool(
     'create_edge',
-    'Create an edge between two nodes',
+    'Create an edge between two nodes. For sequential flows, use step routing with directional handles.',
     {
       boardId: z.string(),
       source: z.string(),
       target: z.string(),
       label: z.string().optional(),
+      sourceHandle: z.enum(VALID_SOURCE_HANDLES).optional(),
+      targetHandle: z.enum(VALID_TARGET_HANDLES).optional(),
+      style: z.record(z.string(), z.string()).optional(),
     },
     (args) => wrapHandler('create_edge')(args),
   );

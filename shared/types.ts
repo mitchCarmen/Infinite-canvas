@@ -65,6 +65,17 @@ export interface BoardIndex {
 
 export type ReorderAction = 'bring_to_front' | 'send_to_back' | 'bring_forward' | 'send_backward';
 
+export const VALID_SOURCE_HANDLES = [
+  'top-source', 'bottom-source', 'left-source', 'right-source',
+] as const;
+
+export const VALID_TARGET_HANDLES = [
+  'top-target', 'bottom-target', 'left-target', 'right-target',
+] as const;
+
+export type SourceHandle = typeof VALID_SOURCE_HANDLES[number];
+export type TargetHandle = typeof VALID_TARGET_HANDLES[number];
+
 export const DEFAULT_NODE_DIMENSIONS: Record<NodeType, { width: number; height: number }> = {
   rectangle: { width: 150, height: 80 },
   circle: { width: 100, height: 100 },

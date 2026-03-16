@@ -51,7 +51,10 @@ export function createMcpToolHandler(boardsDir: string): ToolHandler {
         return store.deleteNode(args.boardId, args.nodeId, actor);
 
       case 'create_edge':
-        return store.createEdge(args.boardId, args.source, args.target, actor, args.label);
+        return store.createEdge(
+          args.boardId, args.source, args.target, actor,
+          args.label, args.style, args.sourceHandle, args.targetHandle,
+        );
 
       case 'delete_edge':
         return store.deleteEdge(args.boardId, args.edgeId, actor);
