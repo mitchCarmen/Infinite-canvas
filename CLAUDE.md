@@ -67,7 +67,8 @@ Boards are stored as individual JSON files in `boards/` directory.
 - **`enhancedNodes` callbacks** (`onFinishEdit`, `onCancelEdit`) are stable `useCallback` refs. `onFinishEdit` captures `refetch` via `refetchRef` (not in its dep array) to avoid invalidating the callback on every board fetch. Callbacks take `nodeId` explicitly — `useNodeEdit` passes it through.
 - **`useBoard` bulk updates** only send positions for nodes that actually moved (tracked via `movedIdsRef`), not all nodes. Initial thumbnail capture is deferred to first drag-end.
 - **`NodeFormattingToolbar`** does NOT subscribe to `useViewport()` — this was removed to prevent pan/zoom re-renders. Position updates come from `flowToScreenPosition()` via `useReactFlow()`. Style computations are `useMemo`'d on `selectedNodes`. Toolbar is unmounted during drag (`!isDraggingNode` guard in CanvasView).
-- **`areNodePropsEqual` scope**: only compares `selected` and `data` fields. Top-level `NodeProps` (positionAbsoluteX/Y, dragging, zIndex) are intentionally not compared — no node component reads them. New visual data fields are compared automatically (safe by default); new internal/callback fields must be added to `IGNORED_DATA_KEYS`.
+- **Node resize** works via `NodeResizer` → React Flow dimension changes → NodeProps `width`/`height`. Node components read dimensions from NodeProps (with fallback to `data.width`/`data.height`), outer div uses `width: '100%', height: '100%'` to fill the React Flow wrapper, SVG uses `width="100%" height="100%"` with viewBox. Resize end persists new dimensions to backend via `api.updateNode`.
+- **`areNodePropsEqual` scope**: compares `selected`, `width`, `height`, and `data` fields. Top-level `NodeProps` (positionAbsoluteX/Y, dragging, zIndex) are intentionally not compared — no node component reads them. `width`/`height` ARE compared because node components use them for SVG rendering and NodeResizer updates them during resize. New visual data fields are compared automatically (safe by default); new internal/callback fields must be added to `IGNORED_DATA_KEYS`.
 
 ## Canvas Interactions (Figma/Miro-style)
 
@@ -80,6 +81,7 @@ Boards are stored as individual JSON files in `boards/` directory.
 - **Double-click canvas** → create rectangle node
 - **Double-click node** → edit node label (blocked if node is locked)
 - **Select node(s)** → NodeFormattingToolbar appears above selection (shape, font, color, bold, alignment, link, emoji, lock)
+- **Drag corner/edge of selected node** → resize node (NodeResizer handles); persisted to backend on resize end
 - **Left-click edge** → activate lineage highlight: traces full upstream/downstream chain via BFS, highlights in bright blue, dims non-lineage elements to 0.2 opacity
 - **Click canvas / click node / Escape** → clear lineage highlight (Escape closes search bar first if open)
 

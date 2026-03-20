@@ -6,9 +6,9 @@ import { ensureContrast } from '../../utils/color';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const TextNode = React.memo(function TextNode({ data, selected }: NodeProps) {
-  const width = (data.width as number) ?? 150;
-  const height = (data.height as number) ?? 40;
+const TextNode = React.memo(function TextNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const width = nodeWidth ?? (data.width as number) ?? 150;
+  const height = nodeHeight ?? (data.height as number) ?? 40;
   const canvasBg = data.canvasLight ? '#ffffff' : '#1e1e24';
   const {
     color: styleColor, fontSize, fontFamily, fontWeight,
@@ -23,8 +23,8 @@ const TextNode = React.memo(function TextNode({ data, selected }: NodeProps) {
   return (
     <div
       style={{
-        width,
-        height,
+        width: '100%',
+        height: '100%',
         position: 'relative',
         display: 'flex',
         alignItems,

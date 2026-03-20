@@ -167,6 +167,27 @@ export function useBoard(boardId: string) {
         }, 300);
         captureThumbnail();
       }
+
+      // Persist resize dimensions when resize ends
+      const resizeEnd = changes.find(
+        (c) => c.type === 'dimensions' && 'resizing' in c && c.resizing === false && c.dimensions,
+      );
+      if (resizeEnd && resizeEnd.type === 'dimensions' && resizeEnd.dimensions) {
+        const { id, dimensions } = resizeEnd;
+        setNodes((currentNodes) => {
+          const node = currentNodes.find((n) => n.id === id);
+          if (node) {
+            api.updateNode(boardId, id, {
+              width: dimensions.width,
+              height: dimensions.height,
+              x: node.position.x,
+              y: node.position.y,
+            }).catch(console.error);
+          }
+          return currentNodes;
+        });
+        captureThumbnail();
+      }
     },
     [onNodesChangeBase, boardId, setNodes, captureThumbnail],
   );

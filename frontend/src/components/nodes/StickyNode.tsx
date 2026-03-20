@@ -5,9 +5,9 @@ import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const StickyNode = React.memo(function StickyNode({ data, selected }: NodeProps) {
-  const width = (data.width as number) ?? 200;
-  const height = (data.height as number) ?? 200;
+const StickyNode = React.memo(function StickyNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const width = nodeWidth ?? (data.width as number) ?? 200;
+  const height = nodeHeight ?? (data.height as number) ?? 200;
   const {
     fill: rawFill, borderColor: rawBorderColor, color, fontSize, fontFamily, fontWeight,
     textAlign, verticalAlign, locked, link, emoji,
@@ -22,11 +22,11 @@ const StickyNode = React.memo(function StickyNode({ data, selected }: NodeProps)
   const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <NodeResizer isVisible={!!selected && !locked} minWidth={80} minHeight={80} />
       <svg
-        width={width}
-        height={height}
+        width="100%"
+        height="100%"
         viewBox={`0 0 ${width} ${height}`}
         style={{ filter: 'drop-shadow(2px 3px 4px rgba(0,0,0,0.2))' }}
       >

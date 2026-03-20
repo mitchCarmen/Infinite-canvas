@@ -5,10 +5,11 @@ import type { NodeProps } from '@xyflow/react';
  * IGNORE-list approach: callbacks and transient internal props are skipped,
  * all other data keys are compared by reference (===).
  *
- * Scope: only `selected` and `data` fields are compared. Top-level NodeProps
- * (positionAbsoluteX/Y, dragging, zIndex, width, height) are intentionally
- * not compared — no current node component reads them. If that changes, add
- * comparisons here.
+ * Scope: `selected`, `width`, `height`, and `data` fields are compared.
+ * Top-level NodeProps (positionAbsoluteX/Y, dragging, zIndex) are intentionally
+ * not compared — no current node component reads them. `width` and `height`
+ * ARE compared because node components use them for SVG rendering and
+ * NodeResizer updates them during resize.
  *
  * Maintenance contract:
  * - New VISUAL data fields are compared automatically (safe by default).
@@ -22,6 +23,8 @@ const IGNORED_DATA_KEYS = new Set([
 
 export function areNodePropsEqual(prev: NodeProps, next: NodeProps): boolean {
   if (prev.selected !== next.selected) return false;
+  if (prev.width !== next.width) return false;
+  if (prev.height !== next.height) return false;
 
   const p = prev.data as Record<string, unknown>;
   const n = next.data as Record<string, unknown>;

@@ -5,9 +5,9 @@ import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const HexagonNode = React.memo(function HexagonNode({ data, selected }: NodeProps) {
-  const width = (data.width as number) ?? 130;
-  const height = (data.height as number) ?? 100;
+const HexagonNode = React.memo(function HexagonNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const width = nodeWidth ?? (data.width as number) ?? 130;
+  const height = nodeHeight ?? (data.height as number) ?? 100;
   const {
     fill, borderColor, color, fontSize, fontFamily, fontWeight,
     textAlign, verticalAlign, locked, link, emoji,
@@ -28,9 +28,9 @@ const HexagonNode = React.memo(function HexagonNode({ data, selected }: NodeProp
   const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <NodeResizer isVisible={!!selected && !locked} minWidth={60} minHeight={50} />
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
         <polygon points={points} fill={fill} stroke={borderColor} strokeWidth={2} />
         {!isEditing && (
           <foreignObject x={inset} y={4} width={width - inset * 2} height={height - 8}>

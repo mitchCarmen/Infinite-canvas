@@ -4,18 +4,18 @@ import { useNodeEdit } from './useNodeEdit';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const ImageNode = React.memo(function ImageNode({ data, selected }: NodeProps) {
-  const width = (data.width as number) ?? 200;
-  const height = (data.height as number) ?? 200;
+const ImageNode = React.memo(function ImageNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const width = nodeWidth ?? (data.width as number) ?? 200;
+  const height = nodeHeight ?? (data.height as number) ?? 200;
   const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#cccccc';
   const imageUrl = data.imageUrl as string | undefined;
   const locked = data.locked === true;
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <NodeResizer isVisible={!!selected && !locked} minWidth={50} minHeight={50} />
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
         <rect
           x={1}
           y={1}

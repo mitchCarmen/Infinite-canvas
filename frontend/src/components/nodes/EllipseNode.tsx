@@ -5,9 +5,9 @@ import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const EllipseNode = React.memo(function EllipseNode({ data, selected }: NodeProps) {
-  const width = (data.width as number) ?? 140;
-  const height = (data.height as number) ?? 80;
+const EllipseNode = React.memo(function EllipseNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const width = nodeWidth ?? (data.width as number) ?? 140;
+  const height = nodeHeight ?? (data.height as number) ?? 80;
   const {
     fill, borderColor, color, fontSize, fontFamily, fontWeight,
     textAlign, verticalAlign, locked, link, emoji,
@@ -18,9 +18,9 @@ const EllipseNode = React.memo(function EllipseNode({ data, selected }: NodeProp
   const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <NodeResizer isVisible={!!selected && !locked} minWidth={60} minHeight={40} />
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
         <ellipse
           cx={width / 2}
           cy={height / 2}

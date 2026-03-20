@@ -5,9 +5,9 @@ import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const CircleNode = React.memo(function CircleNode({ data, selected }: NodeProps) {
-  const w = (data.width as number) ?? 100;
-  const h = (data.height as number) ?? 100;
+const CircleNode = React.memo(function CircleNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const w = nodeWidth ?? (data.width as number) ?? 100;
+  const h = nodeHeight ?? (data.height as number) ?? 100;
   const diameter = Math.min(w, h);
   const r = diameter / 2 - 1;
   const {
@@ -20,9 +20,9 @@ const CircleNode = React.memo(function CircleNode({ data, selected }: NodeProps)
   const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
-    <div style={{ width: diameter, height: diameter, position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <NodeResizer isVisible={!!selected && !locked} minWidth={40} minHeight={40} />
-      <svg width={diameter} height={diameter} viewBox={`0 0 ${diameter} ${diameter}`}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${diameter} ${diameter}`}>
         <circle
           cx={diameter / 2}
           cy={diameter / 2}

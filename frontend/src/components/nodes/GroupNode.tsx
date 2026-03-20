@@ -5,9 +5,9 @@ import { getContrastColor, ensureContrast } from '../../utils/color';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const GroupNode = React.memo(function GroupNode({ data, selected }: NodeProps) {
-  const width = (data.width as number) ?? 400;
-  const height = (data.height as number) ?? 300;
+const GroupNode = React.memo(function GroupNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const width = nodeWidth ?? (data.width as number) ?? 400;
+  const height = nodeHeight ?? (data.height as number) ?? 300;
   const fill = (data.style as Record<string, string>)?.backgroundColor ?? 'rgba(200, 200, 200, 0.1)';
   const borderColor = (data.style as Record<string, string>)?.borderColor ?? '#888888';
   const canvasBg = data.canvasLight ? '#ffffff' : '#1e1e24';
@@ -18,9 +18,9 @@ const GroupNode = React.memo(function GroupNode({ data, selected }: NodeProps) {
   const { isEditing, label, editValue, setEditValue, inputRef, handleKeyDown, handleBlur } = useNodeEdit(data);
 
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <NodeResizer isVisible={!!selected && !locked} minWidth={100} minHeight={80} />
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
         <rect
           x={1}
           y={1}

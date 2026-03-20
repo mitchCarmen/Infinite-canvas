@@ -5,9 +5,9 @@ import { useNodeStyle } from '../../hooks/useNodeStyle';
 import NodeBadges from './NodeBadges';
 import { areNodePropsEqual } from './areNodePropsEqual';
 
-const CylinderNode = React.memo(function CylinderNode({ data, selected }: NodeProps) {
-  const width = (data.width as number) ?? 100;
-  const height = (data.height as number) ?? 120;
+const CylinderNode = React.memo(function CylinderNode({ data, selected, width: nodeWidth, height: nodeHeight }: NodeProps) {
+  const width = nodeWidth ?? (data.width as number) ?? 100;
+  const height = nodeHeight ?? (data.height as number) ?? 120;
   const {
     fill, borderColor, color, fontSize, fontFamily, fontWeight,
     textAlign, verticalAlign, locked, link, emoji,
@@ -33,9 +33,9 @@ const CylinderNode = React.memo(function CylinderNode({ data, selected }: NodePr
   const justifyContent = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <NodeResizer isVisible={!!selected && !locked} minWidth={50} minHeight={60} />
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
         <path d={d} fill={fill} stroke={borderColor} strokeWidth={2} />
         {!isEditing && (
           <foreignObject x={4} y={ry * 2} width={width - 8} height={height - ry * 3}>
