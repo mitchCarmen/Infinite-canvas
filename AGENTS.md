@@ -1,3 +1,5 @@
+> **Inherits from:** Global [`AGENTS.md`](../../AGENTS.md) — read that first for the Orchestrator protocol.
+
 # Agent Instructions
 
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
