@@ -13,6 +13,8 @@ import { DEFAULT_NODE_DIMENSIONS } from '../../../shared/types.js';
 import { createActivity } from './activity.js';
 import { autoLayout } from './layout.js';
 
+const BOARD_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface CreateNodeOpts {
   type: NodeType;
   label: string;
@@ -64,6 +66,8 @@ export class BoardStore {
   // --- Board file I/O ---
 
   private _boardPath(id: string): string {
+    // Ids reach here from REST params and MCP args; anything but a UUID could escape boardsDir.
+    if (!BOARD_ID_RE.test(id)) throw new Error('Board not found');
     return join(this.boardsDir, `${id}.json`);
   }
 

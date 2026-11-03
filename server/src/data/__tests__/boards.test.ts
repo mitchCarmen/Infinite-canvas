@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync } from 'fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { BoardStore } from '../boards.js';
+import type { CanvasNode, CanvasEdge } from '../../../../shared/types.js';
 
 describe('BoardStore', () => {
   let store: BoardStore;
@@ -216,6 +217,17 @@ describe('BoardStore', () => {
       expect(group.label).toBe('My Group');
       const children = updated.nodes.filter(n => n.parentId === group.id);
       expect(children).toHaveLength(2);
+    });
+  });
+
+  describe('board id guard', () => {
+    it('rejects non-UUID ids before touching the filesystem', async () => {
+      const outside = join(tmpDir, 'x.json');
+      writeFileSync(outside, JSON.stringify({ id: 'x', name: 'outside', nodes: [], edges: [], activityLog: [] }));
+      await expect(store.readBoard('../../package')).rejects.toThrow('Board not found');
+      await expect(store.readBoard('../x')).rejects.toThrow('Board not found');
+      await expect(store.deleteBoard('../x')).rejects.toThrow('Board not found');
+      expect(existsSync(outside)).toBe(true);
     });
   });
 });
