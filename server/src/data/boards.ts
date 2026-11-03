@@ -267,11 +267,11 @@ export class BoardStore {
   ): Promise<Board> {
     const board = this._readBoardFile(boardId);
 
+    const byId = new Map(board.nodes.map(n => [n.id, n]));
     for (const update of updates) {
-      const idx = board.nodes.findIndex(n => n.id === update.nodeId);
-      if (idx === -1) throw new Error(`Node not found: ${update.nodeId}`);
+      const node = byId.get(update.nodeId);
+      if (!node) throw new Error(`Node not found: ${update.nodeId}`);
 
-      const node = board.nodes[idx];
       if (update.type !== undefined && update.type !== node.type) {
         node.type = update.type;
         if (update.width === undefined) node.width = DEFAULT_NODE_DIMENSIONS[update.type].width;

@@ -338,4 +338,21 @@ describe('BoardStore', () => {
       expect(index.map((e: { id: string }) => e.id)).toEqual([board.id]);
     });
   });
+
+  describe('bulkUpdateNodes', () => {
+    it('updates several nodes and rejects unknown ids', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A' }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'B' }, 'user');
+      const [aId, bId] = b.nodes.map(n => n.id);
+      const updated = await store.bulkUpdateNodes(board.id, [
+        { nodeId: aId, x: 10 }, { nodeId: bId, y: 20, label: 'B2' },
+      ], 'user');
+      expect(updated.nodes[0].x).toBe(10);
+      expect(updated.nodes[1].y).toBe(20);
+      expect(updated.nodes[1].label).toBe('B2');
+      await expect(store.bulkUpdateNodes(board.id, [{ nodeId: 'nope', x: 1 }], 'user'))
+        .rejects.toThrow('Node not found: nope');
+    });
+  });
 });
