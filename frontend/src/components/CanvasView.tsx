@@ -46,6 +46,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     onEdgesChange,
     onConnect,
     loading,
+    error,
     refetch,
     setNodes,
     snapshot,
@@ -422,6 +423,15 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     return (
       <div className="canvas-loading">
         <LoadingSpinner size={40} label="Loading board..." />
+      </div>
+    );
+  }
+
+  if (error && !board) {
+    return (
+      <div className="canvas-loading" style={{ flexDirection: 'column' }}>
+        <div className="board-list-error" role="alert">{error}</div>
+        <button className="btn btn-primary" onClick={refetch}>Retry</button>
       </div>
     );
   }

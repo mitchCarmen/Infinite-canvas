@@ -89,6 +89,7 @@ function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
 export function useBoard(boardId: string) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,9 +115,13 @@ export function useBoard(boardId: string) {
       setBoard(data);
       setNodes(toFlowNodes(data.nodes));
       setEdges(toFlowEdges(data.edges));
+      setError(null);
+      initialLoadDone.current = true;
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
-      initialLoadDone.current = true;
     }
   }, [boardId, setNodes, setEdges]);
 
@@ -262,6 +267,7 @@ export function useBoard(boardId: string) {
     onEdgesChange,
     onConnect,
     loading,
+    error,
     refetch: fetchBoard,
     setNodes,
     setEdges,
