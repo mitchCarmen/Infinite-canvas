@@ -58,7 +58,7 @@ export class BoardStore {
   }
 
   private _writeIndex(entries: BoardIndex[]): void {
-    const tmp = this.indexPath + '.tmp';
+    const tmp = `${this.indexPath}.${process.pid}.${uuid()}.tmp`;
     writeFileSync(tmp, JSON.stringify(entries, null, 2), 'utf-8');
     renameSync(tmp, this.indexPath);
   }
@@ -78,9 +78,10 @@ export class BoardStore {
     return JSON.parse(raw) as Board;
   }
 
+  // ponytail: no cross-process lock; REST and MCP are separate processes, per-board lock if concurrent edits ever matter
   private _writeBoardFile(board: Board): void {
     const p = this._boardPath(board.id);
-    const tmp = p + '.tmp';
+    const tmp = `${p}.${process.pid}.${uuid()}.tmp`;
     writeFileSync(tmp, JSON.stringify(board, null, 2), 'utf-8');
     renameSync(tmp, p);
   }

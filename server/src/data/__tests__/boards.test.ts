@@ -299,4 +299,18 @@ describe('BoardStore', () => {
       expect([a.x, a.y]).toEqual([80, 80]);
     });
   });
+
+  describe('temp files', () => {
+    it('two stores writing the same board do not collide', async () => {
+      const other = new BoardStore(tmpDir);
+      const board = await store.createBoard('Test', 'user');
+      // Squat the old fixed temp names: unique temp paths must not care.
+      mkdirSync(join(tmpDir, 'boards', `${board.id}.json.tmp`));
+      mkdirSync(join(tmpDir, 'index.json.tmp'));
+      await store.createNode(board.id, { type: 'rectangle', label: 'A' }, 'user');
+      await other.createNode(board.id, { type: 'rectangle', label: 'B' }, 'claude');
+      const final = await store.readBoard(board.id);
+      expect(final.nodes.map(n => n.label)).toEqual(['A', 'B']);
+    });
+  });
 });
