@@ -291,8 +291,21 @@ export function useBoard(boardId: string) {
         y: n.position.y,
       }));
       api.bulkUpdateNodes(boardId, nodeUpdates).catch(console.error);
+      // Persist the whole snapshot so undo/redo survives a reload; re-derive from the server's copy.
+      // ponytail: rapid undo/redo requests can race (last response wins); serialize if that shows up.
+      api
+        .replaceGraph(boardId, toCanvasNodes(restoredNodes), toCanvasEdges(restoredEdges))
+        .then((data) => {
+          setBoard(data);
+          setNodes(toFlowNodes(data.nodes));
+          setEdges(toFlowEdges(data.edges));
+        })
+        .catch((err) => {
+          console.error(err);
+          fetchBoard();
+        });
     },
-    [boardId, setNodes, setEdges],
+    [boardId, setNodes, setEdges, fetchBoard],
   );
 
   const undo = useCallback(() => {
