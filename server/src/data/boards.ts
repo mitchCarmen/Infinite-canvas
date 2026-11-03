@@ -281,10 +281,17 @@ export class BoardStore {
     const idx = board.nodes.findIndex(n => n.id === nodeId);
     if (idx === -1) throw new Error('Node not found');
 
-    const label = board.nodes[idx].label;
+    const [removed] = board.nodes.splice(idx, 1);
+    const label = removed.label;
 
-    // Remove the node
-    board.nodes.splice(idx, 1);
+    // Ungroup: children move up to the removed node's parent (or the canvas), keeping their on-screen position.
+    for (const child of board.nodes) {
+      if (child.parentId !== nodeId) continue;
+      child.x += removed.x;
+      child.y += removed.y;
+      if (removed.parentId) child.parentId = removed.parentId;
+      else delete child.parentId;
+    }
 
     // Cascade: remove all edges connected to this node
     board.edges = board.edges.filter(e => e.source !== nodeId && e.target !== nodeId);
@@ -437,7 +444,8 @@ export class BoardStore {
   ): Promise<Board> {
     const board = this._readBoardFile(boardId);
 
-    const children = board.nodes.filter(n => nodeIds.includes(n.id));
+    // Nodes already in a group keep their parent; their positions are relative to it.
+    const children = board.nodes.filter(n => nodeIds.includes(n.id) && !n.parentId);
     if (children.length === 0) throw new Error('No valid nodes for group');
 
     // Compute bounding box with padding
@@ -460,11 +468,12 @@ export class BoardStore {
       zIndex: minZ - 1, // Group goes behind children
     };
 
-    board.nodes.push(groupNode);
-
-    // Set parentId on children
+    // React Flow needs parents before children and child positions relative to the parent.
+    board.nodes.splice(board.nodes.indexOf(children[0]), 0, groupNode);
     for (const child of children) {
       child.parentId = groupNode.id;
+      child.x -= groupNode.x;
+      child.y -= groupNode.y;
     }
 
     board.updatedAt = new Date().toISOString();

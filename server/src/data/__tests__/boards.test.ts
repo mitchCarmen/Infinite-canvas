@@ -230,4 +230,73 @@ describe('BoardStore', () => {
       expect(existsSync(outside)).toBe(true);
     });
   });
+
+  describe('createGroup semantics', () => {
+    it('stores child positions relative to the group and puts the group before its children', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'Z', x: 900, y: 900 }, 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 0, y: 0 }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'B', x: 200, y: 200 }, 'user');
+      const ids = b.nodes.slice(1).map(n => n.id);
+      const updated = await store.createGroup(board.id, 'G', ids, 'user');
+      const groupIdx = updated.nodes.findIndex(n => n.type === 'group');
+      const group = updated.nodes[groupIdx];
+      expect([group.x, group.y]).toEqual([-40, -40]);
+      const a = updated.nodes.find(n => n.label === 'A')!;
+      const bb = updated.nodes.find(n => n.label === 'B')!;
+      expect([a.x, a.y]).toEqual([40, 40]);
+      expect([bb.x, bb.y]).toEqual([240, 240]);
+      const children = updated.nodes.filter(n => n.parentId === group.id);
+      expect(children).toHaveLength(2);
+      for (const child of children) {
+        expect(groupIdx).toBeLessThan(updated.nodes.indexOf(child));
+      }
+    });
+
+    it('ignores nodes that already belong to a group', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 0, y: 0 }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'C', x: 500, y: 0 }, 'user');
+      const [aId, cId] = b.nodes.map(n => n.id);
+      const g1 = await store.createGroup(board.id, 'G1', [aId], 'user');
+      const g1Id = g1.nodes.find(n => n.label === 'G1')!.id;
+      const updated = await store.createGroup(board.id, 'G2', [aId, cId], 'user');
+      const g2Id = updated.nodes.find(n => n.label === 'G2')!.id;
+      expect(updated.nodes.find(n => n.id === aId)!.parentId).toBe(g1Id);
+      expect(updated.nodes.find(n => n.id === cId)!.parentId).toBe(g2Id);
+    });
+  });
+
+  describe('deleteNode on a group', () => {
+    it('ungroups children and restores absolute positions', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 0, y: 0 }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'B', x: 200, y: 200 }, 'user');
+      const grouped = await store.createGroup(board.id, 'G', b.nodes.map(n => n.id), 'user');
+      const groupId = grouped.nodes.find(n => n.type === 'group')!.id;
+      const updated = await store.deleteNode(board.id, groupId, 'user');
+      expect(updated.nodes).toHaveLength(2);
+      const a = updated.nodes.find(n => n.label === 'A')!;
+      const bb = updated.nodes.find(n => n.label === 'B')!;
+      expect(a.parentId).toBeUndefined();
+      expect(bb.parentId).toBeUndefined();
+      expect([a.x, a.y]).toEqual([0, 0]);
+      expect([bb.x, bb.y]).toEqual([200, 200]);
+    });
+
+    it('re-parents children of a nested group to the outer group', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 100, y: 100 }, 'user');
+      const aId = b.nodes[0].id;
+      const inner = await store.createGroup(board.id, 'Inner', [aId], 'user');
+      const innerId = inner.nodes.find(n => n.label === 'Inner')!.id;
+      const outer = await store.createGroup(board.id, 'Outer', [innerId], 'user');
+      const outerId = outer.nodes.find(n => n.label === 'Outer')!.id;
+      const updated = await store.deleteNode(board.id, innerId, 'user');
+      const a = updated.nodes.find(n => n.id === aId)!;
+      expect(a.parentId).toBe(outerId);
+      // Inner sat at (60,60) absolute, Outer at (20,20): A is (80,80) relative to Outer.
+      expect([a.x, a.y]).toEqual([80, 80]);
+    });
+  });
 });
