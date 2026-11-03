@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync } from 'fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { BoardStore } from '../boards.js';
+import type { CanvasNode, CanvasEdge } from '../../../../shared/types.js';
 
 describe('BoardStore', () => {
   let store: BoardStore;
@@ -216,6 +217,240 @@ describe('BoardStore', () => {
       expect(group.label).toBe('My Group');
       const children = updated.nodes.filter(n => n.parentId === group.id);
       expect(children).toHaveLength(2);
+    });
+  });
+
+  describe('board id guard', () => {
+    it('rejects non-UUID ids before touching the filesystem', async () => {
+      const outside = join(tmpDir, 'x.json');
+      writeFileSync(outside, JSON.stringify({ id: 'x', name: 'outside', nodes: [], edges: [], activityLog: [] }));
+      await expect(store.readBoard('../../package')).rejects.toThrow('Board not found');
+      await expect(store.readBoard('../x')).rejects.toThrow('Board not found');
+      await expect(store.deleteBoard('../x')).rejects.toThrow('Board not found');
+      expect(existsSync(outside)).toBe(true);
+    });
+  });
+
+  describe('createGroup semantics', () => {
+    it('stores child positions relative to the group and puts the group before its children', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'Z', x: 900, y: 900 }, 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 0, y: 0 }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'B', x: 200, y: 200 }, 'user');
+      const ids = b.nodes.slice(1).map(n => n.id);
+      const updated = await store.createGroup(board.id, 'G', ids, 'user');
+      const groupIdx = updated.nodes.findIndex(n => n.type === 'group');
+      const group = updated.nodes[groupIdx];
+      expect([group.x, group.y]).toEqual([-40, -40]);
+      const a = updated.nodes.find(n => n.label === 'A')!;
+      const bb = updated.nodes.find(n => n.label === 'B')!;
+      expect([a.x, a.y]).toEqual([40, 40]);
+      expect([bb.x, bb.y]).toEqual([240, 240]);
+      const children = updated.nodes.filter(n => n.parentId === group.id);
+      expect(children).toHaveLength(2);
+      for (const child of children) {
+        expect(groupIdx).toBeLessThan(updated.nodes.indexOf(child));
+      }
+    });
+
+    it('ignores nodes that already belong to a group', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 0, y: 0 }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'C', x: 500, y: 0 }, 'user');
+      const [aId, cId] = b.nodes.map(n => n.id);
+      const g1 = await store.createGroup(board.id, 'G1', [aId], 'user');
+      const g1Id = g1.nodes.find(n => n.label === 'G1')!.id;
+      const updated = await store.createGroup(board.id, 'G2', [aId, cId], 'user');
+      const g2Id = updated.nodes.find(n => n.label === 'G2')!.id;
+      expect(updated.nodes.find(n => n.id === aId)!.parentId).toBe(g1Id);
+      expect(updated.nodes.find(n => n.id === cId)!.parentId).toBe(g2Id);
+    });
+  });
+
+  describe('deleteNode on a group', () => {
+    it('ungroups children and restores absolute positions', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 0, y: 0 }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'B', x: 200, y: 200 }, 'user');
+      const grouped = await store.createGroup(board.id, 'G', b.nodes.map(n => n.id), 'user');
+      const groupId = grouped.nodes.find(n => n.type === 'group')!.id;
+      const updated = await store.deleteNode(board.id, groupId, 'user');
+      expect(updated.nodes).toHaveLength(2);
+      const a = updated.nodes.find(n => n.label === 'A')!;
+      const bb = updated.nodes.find(n => n.label === 'B')!;
+      expect(a.parentId).toBeUndefined();
+      expect(bb.parentId).toBeUndefined();
+      expect([a.x, a.y]).toEqual([0, 0]);
+      expect([bb.x, bb.y]).toEqual([200, 200]);
+    });
+
+    it('re-parents children of a nested group to the outer group', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'A', x: 100, y: 100 }, 'user');
+      const aId = b.nodes[0].id;
+      const inner = await store.createGroup(board.id, 'Inner', [aId], 'user');
+      const innerId = inner.nodes.find(n => n.label === 'Inner')!.id;
+      const outer = await store.createGroup(board.id, 'Outer', [innerId], 'user');
+      const outerId = outer.nodes.find(n => n.label === 'Outer')!.id;
+      const updated = await store.deleteNode(board.id, innerId, 'user');
+      const a = updated.nodes.find(n => n.id === aId)!;
+      expect(a.parentId).toBe(outerId);
+      // Inner sat at (60,60) absolute, Outer at (20,20): A is (80,80) relative to Outer.
+      expect([a.x, a.y]).toEqual([80, 80]);
+    });
+  });
+
+  describe('temp files', () => {
+    it('two stores writing the same board do not collide', async () => {
+      const other = new BoardStore(tmpDir);
+      const board = await store.createBoard('Test', 'user');
+      // Squat the old fixed temp names: unique temp paths must not care.
+      mkdirSync(join(tmpDir, 'boards', `${board.id}.json.tmp`));
+      mkdirSync(join(tmpDir, 'index.json.tmp'));
+      await store.createNode(board.id, { type: 'rectangle', label: 'A' }, 'user');
+      await other.createNode(board.id, { type: 'rectangle', label: 'B' }, 'claude');
+      const final = await store.readBoard(board.id);
+      expect(final.nodes.map(n => n.label)).toEqual(['A', 'B']);
+    });
+  });
+
+  describe('index recovery', () => {
+    it('listBoards re-adds boards missing from index.json', async () => {
+      const board = await store.createBoard('Lost', 'user');
+      const indexPath = join(tmpDir, 'index.json');
+      writeFileSync(indexPath, '[]');
+      const boards = await store.listBoards();
+      expect(boards).toEqual([{ id: board.id, name: 'Lost', updatedAt: board.updatedAt }]);
+      expect(JSON.parse(readFileSync(indexPath, 'utf-8'))).toEqual(boards);
+    });
+
+    it('listBoards skips unreadable board files', async () => {
+      writeFileSync(join(tmpDir, 'boards', '00000000-0000-4000-8000-000000000000.json'), '{oops');
+      expect(await store.listBoards()).toEqual([]);
+    });
+
+    it('board mutations re-add a missing index entry', async () => {
+      const board = await store.createBoard('Lost', 'user');
+      const indexPath = join(tmpDir, 'index.json');
+      writeFileSync(indexPath, '[]');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A' }, 'user');
+      const index = JSON.parse(readFileSync(indexPath, 'utf-8'));
+      expect(index.map((e: { id: string }) => e.id)).toEqual([board.id]);
+    });
+  });
+
+  describe('bulkUpdateNodes', () => {
+    it('updates several nodes and rejects unknown ids', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A' }, 'user');
+      const b = await store.createNode(board.id, { type: 'rectangle', label: 'B' }, 'user');
+      const [aId, bId] = b.nodes.map(n => n.id);
+      const updated = await store.bulkUpdateNodes(board.id, [
+        { nodeId: aId, x: 10 }, { nodeId: bId, y: 20, label: 'B2' },
+      ], 'user');
+      expect(updated.nodes[0].x).toBe(10);
+      expect(updated.nodes[1].y).toBe(20);
+      expect(updated.nodes[1].label).toBe('B2');
+      await expect(store.bulkUpdateNodes(board.id, [{ nodeId: 'nope', x: 1 }], 'user'))
+        .rejects.toThrow('Node not found: nope');
+    });
+  });
+
+  describe('importGraph', () => {
+    it('imports nodes and edges in one write with one activity entry', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const { board: updated, warnings } = await store.importGraph(board.id, {
+        nodes: [
+          { id: 'a', type: 'rectangle', label: 'A', x: 0, y: 0 },
+          { id: 'b', type: 'circle', label: 'B' },
+        ],
+        edges: [{ source: 'a', target: 'b', label: 'go' }],
+      }, 'claude');
+      expect(warnings).toEqual([]);
+      expect(updated.nodes).toHaveLength(2);
+      expect(updated.nodes[1].width).toBe(100);
+      expect(updated.nodes.map(n => n.zIndex)).toEqual([1, 2]);
+      expect(updated.edges).toHaveLength(1);
+      expect(updated.edges[0].source).toBe(updated.nodes[0].id);
+      expect(updated.edges[0].target).toBe(updated.nodes[1].id);
+      expect(updated.edges[0].label).toBe('go');
+      expect(updated.activityLog).toHaveLength(2);
+      expect(updated.activityLog[1]).toMatchObject({
+        action: 'imported_graph', actor: 'claude', summary: 'Imported 2 nodes and 1 edges',
+      });
+      expect(await store.readBoard(board.id)).toEqual(updated);
+    });
+
+    it('skips duplicate nodes and bad edges with a warning each, leaving no partial state', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const { board: updated, warnings } = await store.importGraph(board.id, {
+        nodes: [
+          { id: 'a', type: 'rectangle', label: 'A' },
+          { id: 'b', type: 'rectangle', label: 'B' },
+          { id: 'g', type: 'group', label: 'G' },
+          { id: 'a', type: 'circle', label: 'A again' },
+        ],
+        edges: [
+          { source: 'a', target: 'b' },
+          { source: 'a', target: 'b' },
+          { source: 'a', target: 'a' },
+          { source: 'a', target: 'missing' },
+          { source: 'a', target: 'g' },
+        ],
+      }, 'claude');
+      expect(warnings).toHaveLength(5);
+      expect(updated.nodes).toHaveLength(3);
+      expect(updated.edges).toHaveLength(1);
+      expect(updated.activityLog).toHaveLength(2);
+      expect(updated.activityLog[1].summary).toBe('Imported 3 nodes and 1 edges');
+    });
+
+    it('succeeds on an empty import', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const { board: updated, warnings } = await store.importGraph(board.id, { nodes: [], edges: [] }, 'user');
+      expect(warnings).toEqual([]);
+      expect(updated.nodes).toEqual([]);
+      expect(updated.activityLog[1].action).toBe('imported_graph');
+    });
+  });
+
+  describe('replaceGraph', () => {
+    const node = (id: string, extra: Partial<CanvasNode> = {}): CanvasNode => ({
+      id, type: 'rectangle', label: id, x: 0, y: 0, width: 150, height: 80, zIndex: 1, ...extra,
+    });
+    const edge = (id: string, source: string, target: string): CanvasEdge => ({ id, source, target });
+
+    it('replaces nodes and edges and round-trips', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'circle', label: 'old' }, 'user');
+      const nodes = [node('g', { type: 'group' }), node('a', { parentId: 'g' }), node('b')];
+      const edges = [edge('e1', 'a', 'b')];
+      const updated = await store.replaceGraph(board.id, nodes, edges, 'user');
+      expect(updated.nodes).toEqual(nodes);
+      expect(updated.edges).toEqual(edges);
+      expect(updated.activityLog.at(-1)!.action).toBe('restored_graph');
+      const read = await store.readBoard(board.id);
+      expect(read.nodes).toEqual(nodes);
+      expect(read.edges).toEqual(edges);
+    });
+
+    it('rejects invalid graphs without writing', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const bad: Array<[CanvasNode[], CanvasEdge[]]> = [
+        [[node('a')], [edge('e', 'a', 'ghost')]],
+        [[node('a'), node('b')], [edge('e', 'a', 'a')]],
+        [[node('a'), node('b')], [edge('e1', 'a', 'b'), edge('e2', 'a', 'b')]],
+        [[node('a'), node('a')], []],
+        [[node('a', { parentId: 'ghost' })], []],
+        [[node('a', { type: 'blob' as never })], []],
+        [[node('a', { x: NaN })], []],
+        [[node('a', { width: '10' as never })], []],
+        [[node('a', { label: 5 as never })], []],
+      ];
+      for (const [nodes, edges] of bad) {
+        await expect(store.replaceGraph(board.id, nodes, edges, 'user')).rejects.toThrow('Invalid graph');
+      }
+      expect(await store.readBoard(board.id)).toEqual(board);
     });
   });
 });
