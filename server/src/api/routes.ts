@@ -11,7 +11,8 @@ export function createApp(boardsDir: string) {
   const store = new BoardStore(boardsDir);
 
   app.use(express.json());
-  app.use(cors());
+  // Dev: the Vite frontend runs on another localhost port. Production serves the frontend from this same origin.
+  app.use(cors({ origin: /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/ }));
 
   // --- Board CRUD ---
 

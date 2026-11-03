@@ -23,6 +23,29 @@ describe('REST API', () => {
     rmSync(tmpDir, { recursive: true });
   });
 
+  const send = (method: string, path: string, body?: unknown) =>
+    fetch(`${baseUrl}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+
+  describe('CORS', () => {
+    it('allows localhost and 127.0.0.1 origins on any port', async () => {
+      for (const origin of ['http://localhost:3010', 'http://127.0.0.1:5173', 'http://localhost']) {
+        const res = await fetch(`${baseUrl}/api/boards`, { headers: { Origin: origin } });
+        expect(res.headers.get('access-control-allow-origin')).toBe(origin);
+      }
+    });
+
+    it('does not allow other origins', async () => {
+      for (const origin of ['http://evil.example', 'http://localhost.evil.example', 'http://127.0.0.1.evil.example:3010']) {
+        const res = await fetch(`${baseUrl}/api/boards`, { headers: { Origin: origin } });
+        expect(res.headers.get('access-control-allow-origin')).toBeNull();
+      }
+    });
+  });
+
   it('POST /api/boards creates a board', async () => {
     const res = await fetch(`${baseUrl}/api/boards`, {
       method: 'POST',
