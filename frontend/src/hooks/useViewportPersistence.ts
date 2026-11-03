@@ -17,6 +17,9 @@ export function useViewportPersistence(
 ) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef = useRef(false);
+  // False after unmount: React Flow can still fire onMoveEnd from a pending
+  // pan-scroll timer, and a save then would store the reset viewport.
+  const activeRef = useRef(false);
 
   // Restore viewport on mount (once instance is available)
   useEffect(() => {
@@ -36,7 +39,7 @@ export function useViewportPersistence(
 
   // Save viewport on move end (debounced); CanvasView wires this to onMoveEnd
   const saveViewport = useCallback(() => {
-    if (!reactFlowInstance) return;
+    if (!reactFlowInstance || !activeRef.current) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       const viewport = reactFlowInstance.getViewport();
@@ -48,6 +51,7 @@ export function useViewportPersistence(
   // where React never unmounts and a pending debounced save would be lost.
   useEffect(() => {
     if (!reactFlowInstance) return;
+    activeRef.current = true;
 
     const save = () => {
       const viewport = reactFlowInstance.getViewport();
@@ -56,6 +60,7 @@ export function useViewportPersistence(
     window.addEventListener('beforeunload', save);
 
     return () => {
+      activeRef.current = false;
       window.removeEventListener('beforeunload', save);
       if (timerRef.current) clearTimeout(timerRef.current);
       save();
