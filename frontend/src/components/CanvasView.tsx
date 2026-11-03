@@ -46,6 +46,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     onEdgesChange,
     onConnect,
     loading,
+    error,
     refetch,
     setNodes,
     snapshot,
@@ -77,7 +78,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   });
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
 
-  useViewportPersistence(boardId, reactFlowInstance);
+  const { saveViewport } = useViewportPersistence(boardId, reactFlowInstance);
 
   const toggleCanvasLight = useCallback(() => {
     setCanvasLight((prev) => {
@@ -96,13 +97,26 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
 
     snapshot('delete selected');
-    for (const node of selectedNodes) {
-      await api.deleteNode(boardId, node.id);
+    try {
+      // Nodes first. The server cascades edge removal, so a selected edge may already be gone;
+      // each call tolerates failure independently and the finally always resyncs the canvas.
+      for (const node of selectedNodes) {
+        try {
+          await api.deleteNode(boardId, node.id);
+        } catch (err) {
+          console.error(`Failed to delete node ${node.id}`, err);
+        }
+      }
+      for (const edge of selectedEdges) {
+        try {
+          await api.deleteEdge(boardId, edge.id);
+        } catch (err) {
+          console.error(`Failed to delete edge ${edge.id}`, err);
+        }
+      }
+    } finally {
+      await refetch();
     }
-    for (const edge of selectedEdges) {
-      await api.deleteEdge(boardId, edge.id);
-    }
-    await refetch();
   }, [nodes, edges, boardId, refetch, snapshot]);
 
   const handleSelectAll = useCallback(() => {
@@ -426,6 +440,15 @@ function CanvasInner({ boardId }: CanvasViewProps) {
     );
   }
 
+  if (error && !board) {
+    return (
+      <div className="canvas-loading" style={{ flexDirection: 'column' }}>
+        <div className="board-list-error" role="alert">{error}</div>
+        <button className="btn btn-primary" onClick={refetch}>Retry</button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
       <Toolbar
@@ -449,6 +472,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onMoveEnd={saveViewport}
           nodeTypes={baseNodeTypes}
           selectionOnDrag
           selectionMode={SelectionMode.Partial}

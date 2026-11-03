@@ -54,14 +54,20 @@ export function useUndoRedo() {
   );
 
   const redo = useCallback(
-    (restore: (nodes: Node[], edges: Edge[]) => void) => {
+    (
+      currentNodes: Node[],
+      currentEdges: Edge[],
+      restore: (nodes: Node[], edges: Edge[]) => void,
+    ) => {
       setRedoStack((prev) => {
         if (prev.length === 0) return prev;
         const snapshot = prev[prev.length - 1];
-        setUndoStack((u) => {
-          // Save current state before redo - we read from the snapshot being restored
-          return [...u, { ...snapshot, description: snapshot.description }];
-        });
+        const currentSnapshot: Snapshot = {
+          nodes: structuredClone(currentNodes),
+          edges: structuredClone(currentEdges),
+          description: snapshot.description,
+        };
+        setUndoStack((u) => [...u, currentSnapshot]);
         isProgrammaticRef.current = true;
         restore(snapshot.nodes, snapshot.edges);
         return prev.slice(0, -1);

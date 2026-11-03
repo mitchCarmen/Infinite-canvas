@@ -16,7 +16,11 @@ import type { Board, CanvasNode, CanvasEdge } from '@shared/types';
 import { useUndoRedo } from './useUndoRedo';
 
 function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
-  return canvasNodes.map((n) => {
+  // React Flow needs parents before children. Stable sort puts top-level nodes
+  // first; child x/y are already parent-relative and pass through unchanged.
+  // ponytail: one level only; nested groups rely on the server's parent-first order.
+  const sorted = [...canvasNodes].sort((a, b) => Number(!!a.parentId) - Number(!!b.parentId));
+  return sorted.map((n) => {
     const isLocked = n.data?.locked === true;
     const node: Node = {
       id: n.id,
@@ -89,6 +93,7 @@ function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
 export function useBoard(boardId: string) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,9 +119,13 @@ export function useBoard(boardId: string) {
       setBoard(data);
       setNodes(toFlowNodes(data.nodes));
       setEdges(toFlowEdges(data.edges));
+      setError(null);
+      initialLoadDone.current = true;
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
-      initialLoadDone.current = true;
     }
   }, [boardId, setNodes, setEdges]);
 
@@ -218,7 +227,10 @@ export function useBoard(boardId: string) {
           .then((board: Board) => {
             setEdges(toFlowEdges(board.edges));
           })
-          .catch(console.error);
+          .catch((err) => {
+            setEdges((eds) => eds.filter((e) => e.id !== tempId));
+            console.error(err instanceof Error ? err.message : err);
+          });
       }
     },
     [boardId, setEdges],
@@ -251,8 +263,8 @@ export function useBoard(boardId: string) {
   }, [undoAction, nodes, edges, restore]);
 
   const redo = useCallback(() => {
-    redoAction(restore);
-  }, [redoAction, restore]);
+    redoAction(nodes, edges, restore);
+  }, [redoAction, nodes, edges, restore]);
 
   return {
     nodes,
@@ -262,6 +274,7 @@ export function useBoard(boardId: string) {
     onEdgesChange,
     onConnect,
     loading,
+    error,
     refetch: fetchBoard,
     setNodes,
     setEdges,

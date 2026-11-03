@@ -1,95 +1,104 @@
 const BASE = '/api';
 
+async function request<T = any>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(BASE + path, init);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error ?? res.statusText);
+  }
+  return res.status === 204 ? (undefined as T) : res.json();
+}
+
 export const api = {
-  listBoards: () => fetch(`${BASE}/boards`).then(r => r.json()),
+  listBoards: () => request(`/boards`),
   createBoard: (name: string, description?: string) =>
-    fetch(`${BASE}/boards`, {
+    request(`/boards`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, description }),
-    }).then(r => r.json()),
-  readBoard: (id: string) => fetch(`${BASE}/boards/${id}`).then(r => r.json()),
-  deleteBoard: (id: string) => fetch(`${BASE}/boards/${id}`, { method: 'DELETE' }),
+    }),
+  readBoard: (id: string) => request(`/boards/${id}`),
+  deleteBoard: (id: string) => request(`/boards/${id}`, { method: 'DELETE' }),
   duplicateBoard: (id: string, newName?: string) =>
-    fetch(`${BASE}/boards/${id}/duplicate`, {
+    request(`/boards/${id}/duplicate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newName }),
-    }).then(r => r.json()),
+    }),
   createNode: (boardId: string, data: any) =>
-    fetch(`${BASE}/boards/${boardId}/nodes`, {
+    request(`/boards/${boardId}/nodes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }).then(r => r.json()),
+    }),
   updateNode: (boardId: string, nodeId: string, data: any) =>
-    fetch(`${BASE}/boards/${boardId}/nodes/${nodeId}`, {
+    request(`/boards/${boardId}/nodes/${nodeId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }).then(r => r.json()),
+    }),
   bulkUpdateNodes: (boardId: string, updates: any[]) =>
-    fetch(`${BASE}/boards/${boardId}/nodes`, {
+    request(`/boards/${boardId}/nodes`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ updates }),
-    }).then(r => r.json()),
+    }),
   deleteNode: (boardId: string, nodeId: string) =>
-    fetch(`${BASE}/boards/${boardId}/nodes/${nodeId}`, { method: 'DELETE' }).then(r => r.json()),
+    request(`/boards/${boardId}/nodes/${nodeId}`, { method: 'DELETE' }),
   reorderNode: (boardId: string, nodeId: string, action: string) =>
-    fetch(`${BASE}/boards/${boardId}/nodes/${nodeId}/reorder`, {
+    request(`/boards/${boardId}/nodes/${nodeId}/reorder`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
-    }).then(r => r.json()),
+    }),
   createEdge: (boardId: string, source: string, target: string, label?: string, sourceHandle?: string, targetHandle?: string) =>
-    fetch(`${BASE}/boards/${boardId}/edges`, {
+    request(`/boards/${boardId}/edges`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ source, target, label, sourceHandle, targetHandle }),
-    }).then(r => r.json()),
+    }),
   updateEdge: (boardId: string, edgeId: string, data: any) =>
-    fetch(`${BASE}/boards/${boardId}/edges/${edgeId}`, {
+    request(`/boards/${boardId}/edges/${edgeId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }).then(r => r.json()),
+    }),
   deleteEdge: (boardId: string, edgeId: string) =>
-    fetch(`${BASE}/boards/${boardId}/edges/${edgeId}`, { method: 'DELETE' }).then(r => r.json()),
+    request(`/boards/${boardId}/edges/${edgeId}`, { method: 'DELETE' }),
   createGroup: (boardId: string, label: string, nodeIds: string[]) =>
-    fetch(`${BASE}/boards/${boardId}/groups`, {
+    request(`/boards/${boardId}/groups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ label, nodeIds }),
-    }).then(r => r.json()),
+    }),
   importMermaid: (boardId: string, mermaidSyntax: string) =>
-    fetch(`${BASE}/boards/${boardId}/import-mermaid`, {
+    request(`/boards/${boardId}/import-mermaid`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mermaidSyntax }),
-    }).then(r => r.json()),
+    }),
   autoLayout: (boardId: string, direction?: string) =>
-    fetch(`${BASE}/boards/${boardId}/auto-layout`, {
+    request(`/boards/${boardId}/auto-layout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ direction }),
-    }).then(r => r.json()),
+    }),
   exportBoard: (boardId: string, format: string) =>
-    fetch(`${BASE}/boards/${boardId}/export`, {
+    request(`/boards/${boardId}/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ format }),
-    }).then(r => r.json()),
+    }),
   updateBoardMetadata: (boardId: string, data: any) =>
-    fetch(`${BASE}/boards/${boardId}`, {
+    request(`/boards/${boardId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }).then(r => r.json()),
+    }),
   uploadImage: (boardId: string, imageData: string, filename: string) =>
-    fetch(`${BASE}/boards/${boardId}/upload-image`, {
+    request(`/boards/${boardId}/upload-image`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ imageData, filename }),
-    }).then(r => r.json()),
+    }),
 };
