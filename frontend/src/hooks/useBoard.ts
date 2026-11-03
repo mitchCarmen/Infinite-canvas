@@ -223,7 +223,10 @@ export function useBoard(boardId: string) {
           .then((board: Board) => {
             setEdges(toFlowEdges(board.edges));
           })
-          .catch(console.error);
+          .catch((err) => {
+            setEdges((eds) => eds.filter((e) => e.id !== tempId));
+            console.error(err instanceof Error ? err.message : err);
+          });
       }
     },
     [boardId, setEdges],
