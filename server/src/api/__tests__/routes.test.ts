@@ -374,6 +374,26 @@ describe('REST API', () => {
     expect(updated.edges.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('POST /api/boards/:id/import-mermaid imports in one write and returns parser + import warnings', async () => {
+    const id = (await (await send('POST', '/api/boards', { name: 'Mermaid' })).json()).id;
+    const res = await send('POST', `/api/boards/${id}/import-mermaid`, {
+      mermaidSyntax: 'graph TD\n  A[Start] --> B[End]\n  A --> B\n  not mermaid at all',
+    });
+    expect(res.status).toBe(200);
+    const result = await res.json();
+    expect(result.nodes).toHaveLength(2);
+    expect(result.edges).toHaveLength(1);
+    expect(result.warnings).toEqual([
+      'Could not parse line: not mermaid at all',
+      'Skipped edge "A" -> "B": duplicate edge',
+    ]);
+    expect(result.activityLog.map((e: any) => e.action)).toEqual(['created_board', 'imported_graph']);
+
+    const persisted = await (await fetch(`${baseUrl}/api/boards/${id}`)).json();
+    expect(persisted).not.toHaveProperty('warnings');
+    expect(persisted.edges).toHaveLength(1);
+  });
+
   it('POST /api/boards/:id/auto-layout applies layout', async () => {
     const createRes = await fetch(`${baseUrl}/api/boards`, {
       method: 'POST',

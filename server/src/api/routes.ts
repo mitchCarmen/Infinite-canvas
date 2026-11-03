@@ -176,38 +176,8 @@ export function createApp(boardsDir: string) {
       const { mermaidSyntax } = validate(schemas.importMermaid)(req.body);
 
       const parsed = parseMermaid(mermaidSyntax);
-
-      // Add each parsed node and edge to the board via the store
-      // This ensures activity logging and validation for each element
-      let board = await store.readBoard(req.params.id);
-      const boardId = req.params.id;
-
-      // Create a mapping from mermaid node IDs to real UUIDs
-      const idMap = new Map<string, string>();
-
-      for (const node of parsed.nodes) {
-        board = await store.createNode(boardId, {
-          type: node.type,
-          label: node.label,
-          x: node.x,
-          y: node.y,
-          width: node.width,
-          height: node.height,
-        }, 'user');
-        // The last added node is at the end of the array
-        const createdNode = board.nodes[board.nodes.length - 1];
-        idMap.set(node.id, createdNode.id);
-      }
-
-      for (const edge of parsed.edges) {
-        const source = idMap.get(edge.source);
-        const target = idMap.get(edge.target);
-        if (source && target) {
-          board = await store.createEdge(boardId, source, target, 'user', edge.label);
-        }
-      }
-
-      res.json(board);
+      const { board, warnings } = await store.importGraph(req.params.id, parsed, 'user');
+      res.json({ ...board, warnings: [...parsed.warnings, ...warnings] });
     } catch (err) {
       next(err);
     }

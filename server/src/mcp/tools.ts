@@ -90,31 +90,8 @@ export function createMcpToolHandler(boardsDir: string): ToolHandler {
       case 'import_mermaid':
         return enrichBoardError(async () => {
           const parsed = parseMermaid(args.mermaidSyntax);
-          const boardId = args.boardId;
-
-          const idMap = new Map<string, string>();
-          let board = await store.readBoard(boardId);
-
-          for (const node of parsed.nodes) {
-            board = await store.createNode(boardId, {
-              type: node.type,
-              label: node.label,
-              x: node.x,
-              y: node.y,
-            }, actor);
-            const createdNode = board.nodes[board.nodes.length - 1];
-            idMap.set(node.id, createdNode.id);
-          }
-
-          for (const edge of parsed.edges) {
-            const source = idMap.get(edge.source);
-            const target = idMap.get(edge.target);
-            if (source && target) {
-              board = await store.createEdge(boardId, source, target, actor, edge.label);
-            }
-          }
-
-          return board;
+          const { board, warnings } = await store.importGraph(args.boardId, parsed, actor);
+          return { ...board, warnings: [...parsed.warnings, ...warnings] };
         });
 
       case 'auto_layout':
