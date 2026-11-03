@@ -18,6 +18,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(port, () => {
-  console.log(`InfiniteCanvas server running on http://localhost:${port}`);
+// Loopback only: the API has no auth.
+app.listen(port, '127.0.0.1', () => {
+  console.log(`InfiniteCanvas server running on http://127.0.0.1:${port}`);
 });

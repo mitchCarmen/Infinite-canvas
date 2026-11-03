@@ -23,6 +23,196 @@ describe('REST API', () => {
     rmSync(tmpDir, { recursive: true });
   });
 
+  const send = (method: string, path: string, body?: unknown) =>
+    fetch(`${baseUrl}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+
+  describe('CORS', () => {
+    it('allows localhost and 127.0.0.1 origins on any port', async () => {
+      for (const origin of ['http://localhost:3010', 'http://127.0.0.1:5173', 'http://localhost']) {
+        const res = await fetch(`${baseUrl}/api/boards`, { headers: { Origin: origin } });
+        expect(res.headers.get('access-control-allow-origin')).toBe(origin);
+      }
+    });
+
+    it('does not allow other origins', async () => {
+      for (const origin of ['http://evil.example', 'http://localhost.evil.example', 'http://127.0.0.1.evil.example:3010']) {
+        const res = await fetch(`${baseUrl}/api/boards`, { headers: { Origin: origin } });
+        expect(res.headers.get('access-control-allow-origin')).toBeNull();
+      }
+    });
+  });
+
+  describe('Request validation', () => {
+    let boardId: string;
+    let nodeA: string;
+    let nodeB: string;
+    let edgeId: string;
+
+    beforeEach(async () => {
+      boardId = (await (await send('POST', '/api/boards', { name: 'Validation' })).json()).id;
+      await send('POST', `/api/boards/${boardId}/nodes`, { type: 'rectangle', label: 'A' });
+      const withNodes = await (await send('POST', `/api/boards/${boardId}/nodes`, { type: 'rectangle', label: 'B' })).json();
+      [nodeA, nodeB] = withNodes.nodes.map((n: any) => n.id);
+      const withEdge = await (await send('POST', `/api/boards/${boardId}/edges`, { source: nodeA, target: nodeB })).json();
+      edgeId = withEdge.edges[0].id;
+    });
+
+    it.each([
+      ['POST', 'nodes', { type: 'rectangle', label: 'X', x: 'bad' }],
+      ['POST', 'nodes', { type: 'rectangle', label: 'X', width: -5 }],
+      ['POST', 'nodes', { type: 'blob', label: 'X' }],
+      ['POST', 'nodes', { type: 'rectangle', label: 'X', style: ['red'] }],
+      ['POST', 'nodes', { label: 'X' }],
+      ['PATCH', 'nodes/:a', { x: 'bad' }],
+      ['PATCH', 'nodes/:a', { height: 0 }],
+      ['PATCH', 'nodes/:a', { type: 'blob' }],
+      ['PATCH', 'nodes/:a', { style: ['red'] }],
+      ['PATCH', 'nodes', { updates: [{ id: 'n1', x: 'bad' }] }],
+      ['PATCH', 'nodes', { updates: [{ x: 1 }] }],
+      ['PATCH', 'nodes', { updates: 'all' }],
+      ['POST', 'edges', { source: 'n1', target: 'n2', sourceHandle: 'middle' }],
+      ['PATCH', 'edges/:e', { style: ['dashed'] }],
+      ['POST', 'groups', { label: 'G', nodeIds: 'n1' }],
+      ['POST', 'nodes/:a/reorder', { action: 'sideways' }],
+      ['PATCH', '', { name: 42 }],
+      ['POST', 'duplicate', { newName: 5 }],
+      ['POST', 'import-mermaid', { mermaidSyntax: 42 }],
+      ['POST', 'auto-layout', { direction: 'XY' }],
+      ['POST', 'upload-image', { imageData: 123, filename: 'a.png' }],
+    ])('%s %s rejects %j with 400 before persisting', async (method, path, body) => {
+      const before = await (await fetch(`${baseUrl}/api/boards/${boardId}`)).json();
+      const url = `/api/boards/${boardId}${path ? `/${path.replace(':a', nodeA).replace(':e', edgeId)}` : ''}`;
+      const res = await send(method, url, body);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid request: /);
+      const after = await (await fetch(`${baseUrl}/api/boards/${boardId}`)).json();
+      expect(after).toEqual(before);
+    });
+
+    it('POST /api/boards rejects a non-string name with 400', async () => {
+      const res = await send('POST', '/api/boards', { name: 5 });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid request: /);
+    });
+
+    it('accepts valid payloads unchanged', async () => {
+      const created = await send('POST', `/api/boards/${boardId}/nodes`, {
+        type: 'sticky', label: 'S', x: 1.5, y: -2, width: 10, height: 20,
+        style: { fill: '#fff' }, data: { link: 'https://example.com', locked: true },
+      });
+      expect(created.status).toBe(201);
+      expect((await created.json()).nodes.at(-1)).toMatchObject({
+        type: 'sticky', label: 'S', x: 1.5, y: -2, width: 10, height: 20,
+        style: { fill: '#fff' }, data: { link: 'https://example.com', locked: true },
+      });
+
+      const edge = await send('POST', `/api/boards/${boardId}/edges`, {
+        source: nodeB, target: nodeA, sourceHandle: 'right-source', targetHandle: 'left-target',
+        style: { routing: 'step', arrowMode: 'forward' },
+      });
+      expect(edge.status).toBe(201);
+      expect((await edge.json()).edges[1]).toMatchObject({ sourceHandle: 'right-source', targetHandle: 'left-target' });
+
+      const bulk = await send('PATCH', `/api/boards/${boardId}/nodes`, { updates: [{ id: nodeA, x: 5, y: 6 }] });
+      expect((await bulk.json()).nodes[0]).toMatchObject({ x: 5, y: 6 });
+
+      expect((await send('PATCH', `/api/boards/${boardId}/edges/${edgeId}`, { label: 'L', style: { routing: 'step' } })).status).toBe(200);
+      expect((await send('POST', `/api/boards/${boardId}/nodes/${nodeA}/reorder`, { action: 'bring_to_front' })).status).toBe(200);
+      expect((await send('PATCH', `/api/boards/${boardId}`, { name: 'Renamed', thumbnail: 'data:image/png;base64,AA==' })).status).toBe(200);
+      expect((await send('POST', `/api/boards/${boardId}/auto-layout`, {})).status).toBe(200);
+      expect((await send('POST', `/api/boards/${boardId}/duplicate`)).status).toBe(201);
+    });
+  });
+
+  describe('PUT /api/boards/:id/graph', () => {
+    it('replaces nodes and edges with a snapshot and round-trips it', async () => {
+      const id = (await (await send('POST', '/api/boards', { name: 'Graph' })).json()).id;
+      const snapshot = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'rectangle', label: 'A', x: 10, y: 20 })).json();
+      const withB = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'circle', label: 'B' })).json();
+      await send('POST', `/api/boards/${id}/edges`, { source: withB.nodes[0].id, target: withB.nodes[1].id });
+
+      const res = await send('PUT', `/api/boards/${id}/graph`, { nodes: snapshot.nodes, edges: snapshot.edges });
+      expect(res.status).toBe(200);
+      const restored = await res.json();
+      expect(restored.nodes).toEqual(snapshot.nodes);
+      expect(restored.edges).toEqual([]);
+      expect(restored.activityLog.at(-1)).toMatchObject({ actor: 'user', action: 'restored_graph' });
+
+      const persisted = await (await fetch(`${baseUrl}/api/boards/${id}`)).json();
+      expect(persisted.nodes).toEqual(snapshot.nodes);
+      expect(persisted.edges).toEqual([]);
+    });
+
+    it('rejects a dangling edge with 400 and leaves the board unchanged', async () => {
+      const id = (await (await send('POST', '/api/boards', { name: 'Graph' })).json()).id;
+      const before = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'rectangle', label: 'A' })).json();
+
+      const res = await send('PUT', `/api/boards/${id}/graph`, {
+        nodes: before.nodes,
+        edges: [{ id: 'e1', source: before.nodes[0].id, target: 'missing' }],
+      });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid graph: /);
+      expect(await (await fetch(`${baseUrl}/api/boards/${id}`)).json()).toEqual(before);
+    });
+
+    it('rejects a malformed node with 400 before persisting', async () => {
+      const id = (await (await send('POST', '/api/boards', { name: 'Graph' })).json()).id;
+      const before = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'rectangle', label: 'A' })).json();
+
+      const res = await send('PUT', `/api/boards/${id}/graph`, { nodes: [{ ...before.nodes[0], width: -1 }], edges: [] });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid request: /);
+      expect(await (await fetch(`${baseUrl}/api/boards/${id}`)).json()).toEqual(before);
+    });
+  });
+
+  describe('Image upload', () => {
+    const newBoardId = async () => (await (await send('POST', '/api/boards', { name: 'Uploads' })).json()).id;
+
+    it('accepts an image larger than the default 100kb JSON limit', async () => {
+      const id = await newBoardId();
+      const bytes = Buffer.alloc(1024 * 1024, 7);
+      const res = await send('POST', `/api/boards/${id}/upload-image`, {
+        imageData: bytes.toString('base64'),
+        filename: 'photo.png',
+      });
+      expect(res.status).toBe(200);
+      const { url } = await res.json();
+      expect(url).toMatch(/^\/api\/assets\/[0-9a-f-]+\.png$/);
+      const asset = await fetch(`${baseUrl}${url}`);
+      expect(Buffer.from(await asset.arrayBuffer()).equals(bytes)).toBe(true);
+    });
+
+    it('lower-cases the stored extension', async () => {
+      const id = await newBoardId();
+      const res = await send('POST', `/api/boards/${id}/upload-image`, { imageData: 'aGk=', filename: 'Shot.JPEG' });
+      expect(res.status).toBe(200);
+      expect((await res.json()).url).toMatch(/\.jpeg$/);
+    });
+
+    it('rejects a non-image extension with 400', async () => {
+      const id = await newBoardId();
+      for (const filename of ['page.html', 'noext', 'x.png.js']) {
+        const res = await send('POST', `/api/boards/${id}/upload-image`, { imageData: 'aGk=', filename });
+        expect(res.status).toBe(400);
+      }
+    });
+
+    it('rejects a body over 25mb with 413', async () => {
+      const id = await newBoardId();
+      const res = await send('POST', `/api/boards/${id}/upload-image`, {
+        imageData: 'A'.repeat(26 * 1024 * 1024),
+        filename: 'huge.png',
+      });
+      expect(res.status).toBe(413);
+    });
+  });
+
   it('POST /api/boards creates a board', async () => {
     const res = await fetch(`${baseUrl}/api/boards`, {
       method: 'POST',
@@ -225,6 +415,26 @@ describe('REST API', () => {
     const updated = await res.json();
     expect(updated.nodes.length).toBeGreaterThanOrEqual(2);
     expect(updated.edges.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('POST /api/boards/:id/import-mermaid imports in one write and returns parser + import warnings', async () => {
+    const id = (await (await send('POST', '/api/boards', { name: 'Mermaid' })).json()).id;
+    const res = await send('POST', `/api/boards/${id}/import-mermaid`, {
+      mermaidSyntax: 'graph TD\n  A[Start] --> B[End]\n  A --> B\n  not mermaid at all',
+    });
+    expect(res.status).toBe(200);
+    const result = await res.json();
+    expect(result.nodes).toHaveLength(2);
+    expect(result.edges).toHaveLength(1);
+    expect(result.warnings).toEqual([
+      'Could not parse line: not mermaid at all',
+      'Skipped edge "A" -> "B": duplicate edge',
+    ]);
+    expect(result.activityLog.map((e: any) => e.action)).toEqual(['created_board', 'imported_graph']);
+
+    const persisted = await (await fetch(`${baseUrl}/api/boards/${id}`)).json();
+    expect(persisted).not.toHaveProperty('warnings');
+    expect(persisted.edges).toHaveLength(1);
   });
 
   it('POST /api/boards/:id/auto-layout applies layout', async () => {

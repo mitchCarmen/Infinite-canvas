@@ -1,15 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { VALID_SOURCE_HANDLES, VALID_TARGET_HANDLES } from '../../../shared/types.js';
+import * as schemas from '../api/schemas.js';
 import { createMcpToolHandler } from './tools.js';
-
-const NODE_TYPES = [
-  'rectangle', 'circle', 'ellipse', 'diamond', 'hexagon',
-  'parallelogram', 'cylinder', 'triangle', 'sticky', 'text', 'image', 'group',
-] as const;
-
-const LAYOUT_DIRECTIONS = ['TB', 'LR', 'BT', 'RL'] as const;
 
 export function createMcpServer(boardsDir: string): { start: () => Promise<void> } {
   const mcpServer = new McpServer(
@@ -39,7 +32,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   mcpServer.tool(
     'create_board',
     'Create a new canvas board',
-    { name: z.string(), description: z.string().optional() },
+    schemas.createBoard.shape,
     (args) => wrapHandler('create_board')(args),
   );
 
@@ -70,7 +63,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   mcpServer.tool(
     'duplicate_board',
     'Duplicate a board',
-    { boardId: z.string(), newName: z.string().optional() },
+    { boardId: z.string(), ...schemas.duplicateBoard.shape },
     (args) => wrapHandler('duplicate_board')(args),
   );
 
@@ -80,11 +73,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
     'Create a node on a board',
     {
       boardId: z.string(),
-      type: z.enum(NODE_TYPES),
-      label: z.string(),
-      x: z.number().optional(),
-      y: z.number().optional(),
-      style: z.record(z.string(), z.string()).optional(),
+      ...schemas.createNode.pick({ type: true, label: true, x: true, y: true, style: true }).shape,
     },
     (args) => wrapHandler('create_node')(args),
   );
@@ -93,18 +82,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   mcpServer.tool(
     'update_node',
     'Update a node on a board',
-    {
-      boardId: z.string(),
-      nodeId: z.string(),
-      type: z.enum(NODE_TYPES).optional(),
-      label: z.string().optional(),
-      x: z.number().optional(),
-      y: z.number().optional(),
-      width: z.number().optional(),
-      height: z.number().optional(),
-      style: z.record(z.string(), z.string()).optional(),
-      data: z.record(z.string(), z.unknown()).optional(),
-    },
+    { boardId: z.string(), nodeId: z.string(), ...schemas.updateNode.shape },
     (args) => wrapHandler('update_node')(args),
   );
 
@@ -120,15 +98,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   mcpServer.tool(
     'create_edge',
     'Create an edge between two nodes. For sequential flows, use step routing with directional handles.',
-    {
-      boardId: z.string(),
-      source: z.string(),
-      target: z.string(),
-      label: z.string().optional(),
-      sourceHandle: z.enum(VALID_SOURCE_HANDLES).optional(),
-      targetHandle: z.enum(VALID_TARGET_HANDLES).optional(),
-      style: z.record(z.string(), z.string()).optional(),
-    },
+    { boardId: z.string(), ...schemas.createEdge.shape },
     (args) => wrapHandler('create_edge')(args),
   );
 
@@ -144,11 +114,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   mcpServer.tool(
     'create_group',
     'Create a group containing specified nodes',
-    {
-      boardId: z.string(),
-      label: z.string(),
-      nodeIds: z.array(z.string()),
-    },
+    { boardId: z.string(), ...schemas.createGroup.shape },
     (args) => wrapHandler('create_group')(args),
   );
 
@@ -156,7 +122,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   mcpServer.tool(
     'import_mermaid',
     'Import a Mermaid diagram into a board',
-    { boardId: z.string(), mermaidSyntax: z.string() },
+    { boardId: z.string(), ...schemas.importMermaid.shape },
     (args) => wrapHandler('import_mermaid')(args),
   );
 
@@ -164,10 +130,7 @@ export function createMcpServer(boardsDir: string): { start: () => Promise<void>
   mcpServer.tool(
     'auto_layout',
     'Auto-layout nodes on a board using dagre',
-    {
-      boardId: z.string(),
-      direction: z.enum(LAYOUT_DIRECTIONS).optional(),
-    },
+    { boardId: z.string(), ...schemas.autoLayout.shape },
     (args) => wrapHandler('auto_layout')(args),
   );
 

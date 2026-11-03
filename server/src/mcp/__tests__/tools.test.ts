@@ -53,6 +53,23 @@ describe('MCP Tools', () => {
     expect(result.edges.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('import_mermaid imports in one write and returns parser + import warnings', async () => {
+    const board = await handler('create_board', { name: 'Test' });
+    const result = await handler('import_mermaid', {
+      boardId: board.id,
+      mermaidSyntax: 'graph TD\n  A[Start] --> B[End]\n  A --> B\n  not mermaid at all',
+    });
+    expect(result.nodes).toHaveLength(2);
+    expect(result.edges).toHaveLength(1);
+    expect(result.warnings).toEqual([
+      'Could not parse line: not mermaid at all',
+      'Skipped edge "A" -> "B": duplicate edge',
+    ]);
+    expect(result.activityLog.map((e: any) => e.action)).toEqual(['created_board', 'imported_graph']);
+    const read = await handler('read_board', { boardId: board.id });
+    expect(read).not.toHaveProperty('warnings');
+  });
+
   it('delete_board removes it from list', async () => {
     const board = await handler('create_board', { name: 'ToDelete' });
     await handler('delete_board', { boardId: board.id });
@@ -330,8 +347,8 @@ describe('MCP Tools', () => {
         boardId: board.id,
         mermaidSyntax: 'graph TD\n  A[Start] --> B{Decision}\n  B --> C[End]',
       });
-      // import_mermaid creates multiple nodes + edges, each producing an activity entry
-      expect(result.activityLog.length).toBeGreaterThan(3);
+      // import_mermaid commits the whole graph as one imported_graph entry
+      expect(result.activityLog.map((e: any) => e.action)).toEqual(['created_board', 'imported_graph']);
       const nonClaude = result.activityLog.filter((e: any) => e.actor !== 'claude');
       expect(nonClaude).toEqual([]);
     });
