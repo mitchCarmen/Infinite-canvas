@@ -46,6 +46,48 @@ describe('REST API', () => {
     });
   });
 
+  describe('Image upload', () => {
+    const newBoardId = async () => (await (await send('POST', '/api/boards', { name: 'Uploads' })).json()).id;
+
+    it('accepts an image larger than the default 100kb JSON limit', async () => {
+      const id = await newBoardId();
+      const bytes = Buffer.alloc(1024 * 1024, 7);
+      const res = await send('POST', `/api/boards/${id}/upload-image`, {
+        imageData: bytes.toString('base64'),
+        filename: 'photo.png',
+      });
+      expect(res.status).toBe(200);
+      const { url } = await res.json();
+      expect(url).toMatch(/^\/api\/assets\/[0-9a-f-]+\.png$/);
+      const asset = await fetch(`${baseUrl}${url}`);
+      expect(Buffer.from(await asset.arrayBuffer()).equals(bytes)).toBe(true);
+    });
+
+    it('lower-cases the stored extension', async () => {
+      const id = await newBoardId();
+      const res = await send('POST', `/api/boards/${id}/upload-image`, { imageData: 'aGk=', filename: 'Shot.JPEG' });
+      expect(res.status).toBe(200);
+      expect((await res.json()).url).toMatch(/\.jpeg$/);
+    });
+
+    it('rejects a non-image extension with 400', async () => {
+      const id = await newBoardId();
+      for (const filename of ['page.html', 'noext', 'x.png.js']) {
+        const res = await send('POST', `/api/boards/${id}/upload-image`, { imageData: 'aGk=', filename });
+        expect(res.status).toBe(400);
+      }
+    });
+
+    it('rejects a body over 25mb with 413', async () => {
+      const id = await newBoardId();
+      const res = await send('POST', `/api/boards/${id}/upload-image`, {
+        imageData: 'A'.repeat(26 * 1024 * 1024),
+        filename: 'huge.png',
+      });
+      expect(res.status).toBe(413);
+    });
+  });
+
   it('POST /api/boards creates a board', async () => {
     const res = await fetch(`${baseUrl}/api/boards`, {
       method: 'POST',

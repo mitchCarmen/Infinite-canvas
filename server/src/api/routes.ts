@@ -10,7 +10,8 @@ export function createApp(boardsDir: string) {
   const app = express();
   const store = new BoardStore(boardsDir);
 
-  app.use(express.json());
+  // Global, not per-route: a route-level parser cannot run after this one. Base64 images need the headroom.
+  app.use(express.json({ limit: '25mb' }));
   // Dev: the Vite frontend runs on another localhost port. Production serves the frontend from this same origin.
   app.use(cors({ origin: /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/ }));
 
@@ -268,12 +269,18 @@ export function createApp(boardsDir: string) {
   // --- Image upload ---
 
   const assetsDir = join(boardsDir, 'assets');
+  const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
   app.post('/api/boards/:id/upload-image', async (req, res, next) => {
     try {
       const { imageData, filename } = req.body;
       if (!imageData || !filename) {
         res.status(400).json({ error: 'imageData and filename are required' });
+        return;
+      }
+      const ext = /\.(png|jpe?g|gif|webp|svg)$/i.exec(filename)?.[1].toLowerCase();
+      if (!ext) {
+        res.status(400).json({ error: 'filename must end in .png, .jpg, .jpeg, .gif, .webp or .svg' });
         return;
       }
 
@@ -284,10 +291,13 @@ export function createApp(boardsDir: string) {
         mkdirSync(assetsDir, { recursive: true });
       }
 
-      const ext = filename.split('.').pop() || 'png';
-      const assetId = uuid();
-      const assetFilename = `${assetId}.${ext}`;
       const buffer = Buffer.from(imageData, 'base64');
+      // Unreachable while the JSON limit is 25mb (base64 is 4/3 the decoded size); guards the write if that limit grows.
+      if (buffer.length > MAX_IMAGE_BYTES) {
+        res.status(400).json({ error: 'Image exceeds 20 MB' });
+        return;
+      }
+      const assetFilename = `${uuid()}.${ext}`;
       writeFileSync(join(assetsDir, assetFilename), buffer);
 
       res.json({ url: `/api/assets/${assetFilename}` });
@@ -318,6 +328,13 @@ export function createApp(boardsDir: string) {
       message.includes('is required')
     ) {
       res.status(400).json({ error: message });
+      return;
+    }
+
+    // body-parser errors (oversized or malformed JSON) carry their own 4xx status.
+    const status = (err as { status?: number }).status;
+    if (status && status >= 400 && status < 500) {
+      res.status(status).json({ error: message });
       return;
     }
 
