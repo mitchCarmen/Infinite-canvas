@@ -16,7 +16,11 @@ import type { Board, CanvasNode, CanvasEdge } from '@shared/types';
 import { useUndoRedo } from './useUndoRedo';
 
 function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
-  return canvasNodes.map((n) => {
+  // React Flow needs parents before children. Stable sort puts top-level nodes
+  // first; child x/y are already parent-relative and pass through unchanged.
+  // ponytail: one level only; nested groups rely on the server's parent-first order.
+  const sorted = [...canvasNodes].sort((a, b) => Number(!!a.parentId) - Number(!!b.parentId));
+  return sorted.map((n) => {
     const isLocked = n.data?.locked === true;
     const node: Node = {
       id: n.id,
