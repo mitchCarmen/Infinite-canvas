@@ -78,7 +78,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
   });
   const { fitView, screenToFlowPosition, zoomIn, zoomOut } = useReactFlow();
 
-  useViewportPersistence(boardId, reactFlowInstance);
+  const { saveViewport } = useViewportPersistence(boardId, reactFlowInstance);
 
   const toggleCanvasLight = useCallback(() => {
     setCanvasLight((prev) => {
@@ -459,6 +459,7 @@ function CanvasInner({ boardId }: CanvasViewProps) {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onMoveEnd={saveViewport}
           nodeTypes={baseNodeTypes}
           selectionOnDrag
           selectionMode={SelectionMode.Partial}

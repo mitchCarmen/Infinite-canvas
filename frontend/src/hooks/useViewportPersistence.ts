@@ -34,7 +34,7 @@ export function useViewportPersistence(
     }
   }, [boardId, reactFlowInstance]);
 
-  // Save viewport on changes (debounced)
+  // Save viewport on move end (debounced); CanvasView wires this to onMoveEnd
   const saveViewport = useCallback(() => {
     if (!reactFlowInstance) return;
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -44,36 +44,21 @@ export function useViewportPersistence(
     }, DEBOUNCE_MS);
   }, [boardId, reactFlowInstance]);
 
-  // Listen to move events via onMoveEnd equivalent — poll on interval is too heavy,
-  // so we hook into the ReactFlow instance's viewport getter on a MutationObserver-free approach:
-  // We attach a handler via the onMove callback from CanvasView.
-  // Instead, let's save on any interaction by using a periodic check.
-  // Actually, the simplest approach: save on beforeunload + periodic save.
+  // Unmount save covers in-app navigation; beforeunload covers refresh/close,
+  // where React never unmounts and a pending debounced save would be lost.
   useEffect(() => {
     if (!reactFlowInstance) return;
 
-    // Save every 2 seconds if viewport changed
-    let lastSaved = '';
-    const interval = setInterval(() => {
-      const viewport = reactFlowInstance.getViewport();
-      const serialized = JSON.stringify(viewport);
-      if (serialized !== lastSaved) {
-        localStorage.setItem(storageKey(boardId), serialized);
-        lastSaved = serialized;
-      }
-    }, 2000);
-
-    const handleBeforeUnload = () => {
+    const save = () => {
       const viewport = reactFlowInstance.getViewport();
       localStorage.setItem(storageKey(boardId), JSON.stringify(viewport));
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('beforeunload', save);
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      // Save on unmount
-      handleBeforeUnload();
+      window.removeEventListener('beforeunload', save);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      save();
     };
   }, [boardId, reactFlowInstance]);
 
