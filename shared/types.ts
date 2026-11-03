@@ -1,16 +1,19 @@
-export type NodeType =
-  | 'rectangle'
-  | 'circle'
-  | 'ellipse'
-  | 'diamond'
-  | 'hexagon'
-  | 'parallelogram'
-  | 'cylinder'
-  | 'triangle'
-  | 'sticky'
-  | 'text'
-  | 'image'
-  | 'group';
+export const NODE_TYPES = [
+  'rectangle',
+  'circle',
+  'ellipse',
+  'diamond',
+  'hexagon',
+  'parallelogram',
+  'cylinder',
+  'triangle',
+  'sticky',
+  'text',
+  'image',
+  'group',
+] as const;
+
+export type NodeType = typeof NODE_TYPES[number];
 
 export interface CanvasNode {
   id: string;

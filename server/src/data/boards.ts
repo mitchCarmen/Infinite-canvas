@@ -9,13 +9,13 @@ import type {
   NodeType,
   ReorderAction,
 } from '../../../shared/types.js';
-import { DEFAULT_NODE_DIMENSIONS } from '../../../shared/types.js';
+import { DEFAULT_NODE_DIMENSIONS, NODE_TYPES } from '../../../shared/types.js';
 import { createActivity } from './activity.js';
 import { autoLayout } from './layout.js';
 
 const BOARD_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-interface CreateNodeOpts {
+export interface CreateNodeOpts {
   type: NodeType;
   label: string;
   x?: number;
@@ -495,6 +495,117 @@ export class BoardStore {
 
     board.updatedAt = new Date().toISOString();
     board.activityLog.push(createActivity(actor, 'created_group', `Created group "${label}" with ${children.length} nodes`));
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return board;
+  }
+
+  // --- Bulk graph import / restore ---
+
+  /** Adds a graph keyed by caller-side temp ids in one write; bad nodes/edges are skipped with a warning. */
+  async importGraph(
+    boardId: string,
+    graph: {
+      nodes: Array<{ id: string } & CreateNodeOpts>;
+      edges: Array<{ source: string; target: string; label?: string }>;
+    },
+    actor: 'user' | 'claude',
+  ): Promise<{ board: Board; warnings: string[] }> {
+    const board = this._readBoardFile(boardId);
+    const warnings: string[] = [];
+
+    // Build everything off-board first so nothing is half-applied.
+    let z = board.nodes.length > 0 ? Math.max(...board.nodes.map(n => n.zIndex)) : 0;
+    const created = new Map<string, CanvasNode>();
+    for (const { id, ...opts } of graph.nodes) {
+      if (created.has(id)) {
+        warnings.push(`Skipped node "${id}": duplicate id`);
+        continue;
+      }
+      const dims = DEFAULT_NODE_DIMENSIONS[opts.type];
+      created.set(id, {
+        id: uuid(),
+        type: opts.type,
+        label: opts.label,
+        x: opts.x ?? 0,
+        y: opts.y ?? 0,
+        width: opts.width ?? dims.width,
+        height: opts.height ?? dims.height,
+        zIndex: ++z,
+        style: opts.style,
+        data: opts.data,
+      });
+    }
+
+    const pairs = new Set(board.edges.map(e => `${e.source}>${e.target}`));
+    const edges: CanvasEdge[] = [];
+    for (const e of graph.edges) {
+      const skip = (why: string) => warnings.push(`Skipped edge "${e.source}" -> "${e.target}": ${why}`);
+      const source = created.get(e.source);
+      const target = created.get(e.target);
+      if (!source || !target) { skip('unknown node id'); continue; }
+      if (source === target) { skip('self-loop'); continue; }
+      if (target.type === 'group') { skip('cannot target a group node'); continue; }
+      const key = `${source.id}>${target.id}`;
+      if (pairs.has(key)) { skip('duplicate edge'); continue; }
+      pairs.add(key);
+      edges.push({ id: uuid(), source: source.id, target: target.id, label: e.label });
+    }
+
+    board.nodes.push(...created.values());
+    board.edges.push(...edges);
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(
+      createActivity(actor, 'imported_graph', `Imported ${created.size} nodes and ${edges.length} edges`),
+    );
+    this._writeBoardFile(board);
+    this._updateIndex(board);
+    return { board, warnings };
+  }
+
+  /** Replaces all nodes and edges (e.g. undo/restore). Throws 'Invalid graph: ...' before writing anything. */
+  async replaceGraph(
+    boardId: string,
+    nodes: CanvasNode[],
+    edges: CanvasEdge[],
+    actor: 'user' | 'claude',
+  ): Promise<Board> {
+    const board = this._readBoardFile(boardId);
+    const invalid = (reason: string) => new Error(`Invalid graph: ${reason}`);
+    if (!Array.isArray(nodes) || !Array.isArray(edges)) throw invalid('nodes and edges must be arrays');
+
+    const ids = new Set<string>();
+    for (const n of nodes) {
+      if (typeof n.id !== 'string' || typeof n.label !== 'string') throw invalid('node id and label must be strings');
+      if (!NODE_TYPES.includes(n.type)) throw invalid(`node "${n.id}" has unknown type "${n.type}"`);
+      if (![n.x, n.y, n.width, n.height, n.zIndex].every(Number.isFinite)) {
+        throw invalid(`node "${n.id}" needs finite x, y, width, height and zIndex`);
+      }
+      if (ids.has(n.id)) throw invalid(`duplicate node id "${n.id}"`);
+      ids.add(n.id);
+    }
+    for (const n of nodes) {
+      if (n.parentId !== undefined && (n.parentId === n.id || !ids.has(n.parentId))) {
+        throw invalid(`node "${n.id}" has invalid parent "${n.parentId}"`);
+      }
+    }
+
+    const pairs = new Set<string>();
+    for (const e of edges) {
+      if (typeof e.id !== 'string') throw invalid('edge id must be a string');
+      if (!ids.has(e.source) || !ids.has(e.target)) throw invalid(`edge "${e.id}" references an unknown node`);
+      if (e.source === e.target) throw invalid(`edge "${e.id}" is a self-loop`);
+      const key = JSON.stringify([e.source, e.target]);
+      if (pairs.has(key)) throw invalid(`duplicate edge "${e.source}" -> "${e.target}"`);
+      pairs.add(key);
+    }
+
+    board.nodes = nodes;
+    board.edges = edges;
+    board.updatedAt = new Date().toISOString();
+    board.activityLog.push(
+      createActivity(actor, 'restored_graph', `Restored ${nodes.length} nodes and ${edges.length} edges`),
+    );
     this._writeBoardFile(board);
     this._updateIndex(board);
     return board;

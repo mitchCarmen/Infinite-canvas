@@ -355,4 +355,102 @@ describe('BoardStore', () => {
         .rejects.toThrow('Node not found: nope');
     });
   });
+
+  describe('importGraph', () => {
+    it('imports nodes and edges in one write with one activity entry', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const { board: updated, warnings } = await store.importGraph(board.id, {
+        nodes: [
+          { id: 'a', type: 'rectangle', label: 'A', x: 0, y: 0 },
+          { id: 'b', type: 'circle', label: 'B' },
+        ],
+        edges: [{ source: 'a', target: 'b', label: 'go' }],
+      }, 'claude');
+      expect(warnings).toEqual([]);
+      expect(updated.nodes).toHaveLength(2);
+      expect(updated.nodes[1].width).toBe(100);
+      expect(updated.nodes.map(n => n.zIndex)).toEqual([1, 2]);
+      expect(updated.edges).toHaveLength(1);
+      expect(updated.edges[0].source).toBe(updated.nodes[0].id);
+      expect(updated.edges[0].target).toBe(updated.nodes[1].id);
+      expect(updated.edges[0].label).toBe('go');
+      expect(updated.activityLog).toHaveLength(2);
+      expect(updated.activityLog[1]).toMatchObject({
+        action: 'imported_graph', actor: 'claude', summary: 'Imported 2 nodes and 1 edges',
+      });
+      expect(await store.readBoard(board.id)).toEqual(updated);
+    });
+
+    it('skips duplicate nodes and bad edges with a warning each, leaving no partial state', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const { board: updated, warnings } = await store.importGraph(board.id, {
+        nodes: [
+          { id: 'a', type: 'rectangle', label: 'A' },
+          { id: 'b', type: 'rectangle', label: 'B' },
+          { id: 'g', type: 'group', label: 'G' },
+          { id: 'a', type: 'circle', label: 'A again' },
+        ],
+        edges: [
+          { source: 'a', target: 'b' },
+          { source: 'a', target: 'b' },
+          { source: 'a', target: 'a' },
+          { source: 'a', target: 'missing' },
+          { source: 'a', target: 'g' },
+        ],
+      }, 'claude');
+      expect(warnings).toHaveLength(5);
+      expect(updated.nodes).toHaveLength(3);
+      expect(updated.edges).toHaveLength(1);
+      expect(updated.activityLog).toHaveLength(2);
+      expect(updated.activityLog[1].summary).toBe('Imported 3 nodes and 1 edges');
+    });
+
+    it('succeeds on an empty import', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const { board: updated, warnings } = await store.importGraph(board.id, { nodes: [], edges: [] }, 'user');
+      expect(warnings).toEqual([]);
+      expect(updated.nodes).toEqual([]);
+      expect(updated.activityLog[1].action).toBe('imported_graph');
+    });
+  });
+
+  describe('replaceGraph', () => {
+    const node = (id: string, extra: Partial<CanvasNode> = {}): CanvasNode => ({
+      id, type: 'rectangle', label: id, x: 0, y: 0, width: 150, height: 80, zIndex: 1, ...extra,
+    });
+    const edge = (id: string, source: string, target: string): CanvasEdge => ({ id, source, target });
+
+    it('replaces nodes and edges and round-trips', async () => {
+      const board = await store.createBoard('Test', 'user');
+      await store.createNode(board.id, { type: 'circle', label: 'old' }, 'user');
+      const nodes = [node('g', { type: 'group' }), node('a', { parentId: 'g' }), node('b')];
+      const edges = [edge('e1', 'a', 'b')];
+      const updated = await store.replaceGraph(board.id, nodes, edges, 'user');
+      expect(updated.nodes).toEqual(nodes);
+      expect(updated.edges).toEqual(edges);
+      expect(updated.activityLog.at(-1)!.action).toBe('restored_graph');
+      const read = await store.readBoard(board.id);
+      expect(read.nodes).toEqual(nodes);
+      expect(read.edges).toEqual(edges);
+    });
+
+    it('rejects invalid graphs without writing', async () => {
+      const board = await store.createBoard('Test', 'user');
+      const bad: Array<[CanvasNode[], CanvasEdge[]]> = [
+        [[node('a')], [edge('e', 'a', 'ghost')]],
+        [[node('a'), node('b')], [edge('e', 'a', 'a')]],
+        [[node('a'), node('b')], [edge('e1', 'a', 'b'), edge('e2', 'a', 'b')]],
+        [[node('a'), node('a')], []],
+        [[node('a', { parentId: 'ghost' })], []],
+        [[node('a', { type: 'blob' as never })], []],
+        [[node('a', { x: NaN })], []],
+        [[node('a', { width: '10' as never })], []],
+        [[node('a', { label: 5 as never })], []],
+      ];
+      for (const [nodes, edges] of bad) {
+        await expect(store.replaceGraph(board.id, nodes, edges, 'user')).rejects.toThrow('Invalid graph');
+      }
+      expect(await store.readBoard(board.id)).toEqual(board);
+    });
+  });
 });
