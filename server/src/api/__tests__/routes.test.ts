@@ -46,6 +46,88 @@ describe('REST API', () => {
     });
   });
 
+  describe('Request validation', () => {
+    let boardId: string;
+    let nodeA: string;
+    let nodeB: string;
+    let edgeId: string;
+
+    beforeEach(async () => {
+      boardId = (await (await send('POST', '/api/boards', { name: 'Validation' })).json()).id;
+      await send('POST', `/api/boards/${boardId}/nodes`, { type: 'rectangle', label: 'A' });
+      const withNodes = await (await send('POST', `/api/boards/${boardId}/nodes`, { type: 'rectangle', label: 'B' })).json();
+      [nodeA, nodeB] = withNodes.nodes.map((n: any) => n.id);
+      const withEdge = await (await send('POST', `/api/boards/${boardId}/edges`, { source: nodeA, target: nodeB })).json();
+      edgeId = withEdge.edges[0].id;
+    });
+
+    it.each([
+      ['POST', 'nodes', { type: 'rectangle', label: 'X', x: 'bad' }],
+      ['POST', 'nodes', { type: 'rectangle', label: 'X', width: -5 }],
+      ['POST', 'nodes', { type: 'blob', label: 'X' }],
+      ['POST', 'nodes', { type: 'rectangle', label: 'X', style: ['red'] }],
+      ['POST', 'nodes', { label: 'X' }],
+      ['PATCH', 'nodes/:a', { x: 'bad' }],
+      ['PATCH', 'nodes/:a', { height: 0 }],
+      ['PATCH', 'nodes/:a', { type: 'blob' }],
+      ['PATCH', 'nodes/:a', { style: ['red'] }],
+      ['PATCH', 'nodes', { updates: [{ id: 'n1', x: 'bad' }] }],
+      ['PATCH', 'nodes', { updates: [{ x: 1 }] }],
+      ['PATCH', 'nodes', { updates: 'all' }],
+      ['POST', 'edges', { source: 'n1', target: 'n2', sourceHandle: 'middle' }],
+      ['PATCH', 'edges/:e', { style: ['dashed'] }],
+      ['POST', 'groups', { label: 'G', nodeIds: 'n1' }],
+      ['POST', 'nodes/:a/reorder', { action: 'sideways' }],
+      ['PATCH', '', { name: 42 }],
+      ['POST', 'duplicate', { newName: 5 }],
+      ['POST', 'import-mermaid', { mermaidSyntax: 42 }],
+      ['POST', 'auto-layout', { direction: 'XY' }],
+      ['POST', 'upload-image', { imageData: 123, filename: 'a.png' }],
+    ])('%s %s rejects %j with 400 before persisting', async (method, path, body) => {
+      const before = await (await fetch(`${baseUrl}/api/boards/${boardId}`)).json();
+      const url = `/api/boards/${boardId}${path ? `/${path.replace(':a', nodeA).replace(':e', edgeId)}` : ''}`;
+      const res = await send(method, url, body);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid request: /);
+      const after = await (await fetch(`${baseUrl}/api/boards/${boardId}`)).json();
+      expect(after).toEqual(before);
+    });
+
+    it('POST /api/boards rejects a non-string name with 400', async () => {
+      const res = await send('POST', '/api/boards', { name: 5 });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid request: /);
+    });
+
+    it('accepts valid payloads unchanged', async () => {
+      const created = await send('POST', `/api/boards/${boardId}/nodes`, {
+        type: 'sticky', label: 'S', x: 1.5, y: -2, width: 10, height: 20,
+        style: { fill: '#fff' }, data: { link: 'https://example.com', locked: true },
+      });
+      expect(created.status).toBe(201);
+      expect((await created.json()).nodes.at(-1)).toMatchObject({
+        type: 'sticky', label: 'S', x: 1.5, y: -2, width: 10, height: 20,
+        style: { fill: '#fff' }, data: { link: 'https://example.com', locked: true },
+      });
+
+      const edge = await send('POST', `/api/boards/${boardId}/edges`, {
+        source: nodeB, target: nodeA, sourceHandle: 'right-source', targetHandle: 'left-target',
+        style: { routing: 'step', arrowMode: 'forward' },
+      });
+      expect(edge.status).toBe(201);
+      expect((await edge.json()).edges[1]).toMatchObject({ sourceHandle: 'right-source', targetHandle: 'left-target' });
+
+      const bulk = await send('PATCH', `/api/boards/${boardId}/nodes`, { updates: [{ id: nodeA, x: 5, y: 6 }] });
+      expect((await bulk.json()).nodes[0]).toMatchObject({ x: 5, y: 6 });
+
+      expect((await send('PATCH', `/api/boards/${boardId}/edges/${edgeId}`, { label: 'L', style: { routing: 'step' } })).status).toBe(200);
+      expect((await send('POST', `/api/boards/${boardId}/nodes/${nodeA}/reorder`, { action: 'bring_to_front' })).status).toBe(200);
+      expect((await send('PATCH', `/api/boards/${boardId}`, { name: 'Renamed', thumbnail: 'data:image/png;base64,AA==' })).status).toBe(200);
+      expect((await send('POST', `/api/boards/${boardId}/auto-layout`, {})).status).toBe(200);
+      expect((await send('POST', `/api/boards/${boardId}/duplicate`)).status).toBe(201);
+    });
+  });
+
   describe('Image upload', () => {
     const newBoardId = async () => (await (await send('POST', '/api/boards', { name: 'Uploads' })).json()).id;
 
