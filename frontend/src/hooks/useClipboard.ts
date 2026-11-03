@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import { api } from '../api';
+import type { Board } from '@shared/types';
 
 interface ClipboardData {
   nodes: Node[];
@@ -37,7 +38,7 @@ export function useClipboard(boardId: string, refetch: () => Promise<void>) {
 
     // Create nodes with offset positions and collect new IDs
     for (const node of clipboard.nodes) {
-      const newNode = await api.createNode(boardId, {
+      const board: Board = await api.createNode(boardId, {
         type: node.type ?? 'rectangle',
         label: (node.data?.label as string) ?? node.type ?? 'Node',
         x: node.position.x + offset,
@@ -47,7 +48,8 @@ export function useClipboard(boardId: string, refetch: () => Promise<void>) {
         style: node.data?.style as Record<string, string> | undefined,
         data: node.data,
       });
-      idMap.set(node.id, newNode.id);
+      // createNode returns the whole board; the new node is appended last
+      idMap.set(node.id, board.nodes[board.nodes.length - 1].id);
     }
 
     // Re-create internal edges with mapped IDs
