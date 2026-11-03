@@ -313,4 +313,29 @@ describe('BoardStore', () => {
       expect(final.nodes.map(n => n.label)).toEqual(['A', 'B']);
     });
   });
+
+  describe('index recovery', () => {
+    it('listBoards re-adds boards missing from index.json', async () => {
+      const board = await store.createBoard('Lost', 'user');
+      const indexPath = join(tmpDir, 'index.json');
+      writeFileSync(indexPath, '[]');
+      const boards = await store.listBoards();
+      expect(boards).toEqual([{ id: board.id, name: 'Lost', updatedAt: board.updatedAt }]);
+      expect(JSON.parse(readFileSync(indexPath, 'utf-8'))).toEqual(boards);
+    });
+
+    it('listBoards skips unreadable board files', async () => {
+      writeFileSync(join(tmpDir, 'boards', '00000000-0000-4000-8000-000000000000.json'), '{oops');
+      expect(await store.listBoards()).toEqual([]);
+    });
+
+    it('board mutations re-add a missing index entry', async () => {
+      const board = await store.createBoard('Lost', 'user');
+      const indexPath = join(tmpDir, 'index.json');
+      writeFileSync(indexPath, '[]');
+      await store.createNode(board.id, { type: 'rectangle', label: 'A' }, 'user');
+      const index = JSON.parse(readFileSync(indexPath, 'utf-8'));
+      expect(index.map((e: { id: string }) => e.id)).toEqual([board.id]);
+    });
+  });
 });

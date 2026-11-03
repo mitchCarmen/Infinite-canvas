@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, renameSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { v4 as uuid } from 'uuid';
 import type {
@@ -110,7 +110,23 @@ export class BoardStore {
   }
 
   async listBoards(): Promise<BoardIndex[]> {
-    return this._readIndex();
+    const index = this._readIndex();
+    const known = new Set(index.map(e => e.id));
+    let added = false;
+    // Recover boards whose index entry was lost (e.g. a write from the other process won the race).
+    for (const file of readdirSync(this.boardsDir)) {
+      const id = file.slice(0, -'.json'.length);
+      if (!file.endsWith('.json') || !BOARD_ID_RE.test(id) || known.has(id)) continue;
+      try {
+        const board = this._readBoardFile(id);
+        index.push({ id, name: board.name, updatedAt: board.updatedAt });
+        added = true;
+      } catch {
+        // Unreadable board file: leave it out of the listing rather than failing the whole list.
+      }
+    }
+    if (added) this._writeIndex(index);
+    return index;
   }
 
   async readBoard(boardId: string): Promise<Board> {
@@ -510,6 +526,8 @@ export class BoardStore {
     if (entry) {
       entry.name = board.name;
       entry.updatedAt = board.updatedAt;
+    } else {
+      index.push({ id: board.id, name: board.name, updatedAt: board.updatedAt });
     }
     this._writeIndex(index);
   }
