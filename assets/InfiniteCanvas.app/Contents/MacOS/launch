@@ -4,7 +4,7 @@
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-PROJECT_DIR="/Users/mitchcarmen/Documents/Projects/Personal/Infinite_canvas"
+PROJECT_DIR="/Users/mitchcarmen/Documents/Projects/Personal Projects/Infinite_canvas"
 LOG_FILE="$PROJECT_DIR/.app-launch.log"
 PID_FILE="$PROJECT_DIR/.app-pids"
 FRONTEND_URL="http://localhost:3010"

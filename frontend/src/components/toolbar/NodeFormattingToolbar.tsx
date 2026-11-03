@@ -99,35 +99,29 @@ export default function NodeFormattingToolbar({ selectedNodes, boardId, onRefetc
 
   const applyData = async (key: string, value: unknown) => {
     const INTERNAL_KEYS = new Set(['label', 'style', 'width', 'height', 'nodeType', 'boardId', 'nodeId', 'canvasLight', 'isEditing', 'onStartEdit', 'onFinishEdit', 'onCancelEdit']);
-    for (const node of selectedNodes) {
+    const updates = selectedNodes.map(node => {
       const rawData = (node.data as Record<string, unknown>) ?? {};
       const cleanData: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(rawData)) {
         if (!INTERNAL_KEYS.has(k)) cleanData[k] = v;
       }
       cleanData[key] = value;
-      await api.updateNode(boardId, node.id, { data: cleanData });
-    }
+      return { id: node.id, data: cleanData };
+    });
+    await api.bulkUpdateNodes(boardId, updates);
     onRefetch();
   };
 
   const handleChangeType = async (type: NodeType) => {
     const dims = DEFAULT_NODE_DIMENSIONS[type];
-    for (const node of selectedNodes) {
-      await api.updateNode(boardId, node.id, {
-        type,
-        width: dims.width,
-        height: dims.height,
-      });
-    }
+    const updates = selectedNodes.map(node => ({ id: node.id, type, width: dims.width, height: dims.height }));
+    await api.bulkUpdateNodes(boardId, updates);
     onRefetch();
     setActiveDropdown(null);
   };
 
   const handleClearFormatting = async () => {
-    for (const node of selectedNodes) {
-      await api.updateNode(boardId, node.id, { style: {} });
-    }
+    await api.bulkUpdateNodes(boardId, selectedNodes.map(node => ({ id: node.id, style: {} })));
     onRefetch();
   };
 

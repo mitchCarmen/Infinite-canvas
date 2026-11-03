@@ -6,7 +6,7 @@
     "dev:server": "cd server && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "build": "cd server && npm run build && cd ../frontend && npm run build",
-    "test": "cd server && npm test",
+    "test": "cd server && npm test && cd ../frontend && npm test",
     "test:watch": "cd server && npm run test:watch"
   },
   "devDependencies": {
