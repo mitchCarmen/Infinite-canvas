@@ -1,3 +1,5 @@
+import type { Board, CanvasNode, CanvasEdge } from '@shared/types';
+
 const BASE = '/api';
 
 async function request<T = any>(path: string, init?: RequestInit): Promise<T> {
@@ -62,6 +64,12 @@ export const api = {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+    }),
+  replaceGraph: (boardId: string, nodes: CanvasNode[], edges: CanvasEdge[]) =>
+    request<Board>(`/boards/${boardId}/graph`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodes, edges }),
     }),
   deleteEdge: (boardId: string, edgeId: string) =>
     request(`/boards/${boardId}/edges/${edgeId}`, { method: 'DELETE' }),

@@ -12,10 +12,10 @@ import {
 } from '@xyflow/react';
 import { toPng } from 'html-to-image';
 import { api } from '../api';
-import type { Board, CanvasNode, CanvasEdge } from '@shared/types';
+import type { Board, CanvasNode, CanvasEdge, NodeType } from '@shared/types';
 import { useUndoRedo } from './useUndoRedo';
 
-function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
+export function toFlowNodes(canvasNodes: CanvasNode[]): Node[] {
   // React Flow needs parents before children. Stable sort puts top-level nodes
   // first; child x/y are already parent-relative and pass through unchanged.
   // ponytail: one level only; nested groups rely on the server's parent-first order.
@@ -61,7 +61,7 @@ function mapEdgeRouting(routing?: string): string | undefined {
 
 const ARROW_MARKER = { type: MarkerType.ArrowClosed, width: 20, height: 20 };
 
-function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
+export function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
   return canvasEdges.map((e) => {
     const edgeStyle = e.style as Record<string, string> | undefined;
     const routing = edgeStyle?.routing;
@@ -88,6 +88,43 @@ function toFlowEdges(canvasEdges: CanvasEdge[]): Edge[] {
       style: edgeStyle,
     };
   });
+}
+
+// Exact inverse of toFlowNodes, plus the UI-only keys CanvasView injects into data.
+export function toCanvasNodes(flowNodes: Node[]): CanvasNode[] {
+  return flowNodes.map((n) => {
+    const {
+      label, style, width, height, nodeType,
+      boardId, nodeId, canvasLight, isEditing, onStartEdit, onFinishEdit, onCancelEdit,
+      ...data
+    } = n.data;
+    return {
+      id: n.id,
+      type: n.type as NodeType,
+      label: label as string,
+      x: n.position.x,
+      y: n.position.y,
+      // NodeResizer writes the live size to n.width/n.height; data.width is only refreshed on refetch.
+      width: n.width ?? (width as number),
+      height: n.height ?? (height as number),
+      zIndex: n.zIndex ?? 0,
+      style: style as Record<string, string>,
+      ...(n.parentId ? { parentId: n.parentId } : {}),
+      ...(Object.keys(data).length > 0 ? { data } : {}),
+    };
+  });
+}
+
+export function toCanvasEdges(flowEdges: Edge[]): CanvasEdge[] {
+  return flowEdges.map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    ...(e.sourceHandle ? { sourceHandle: e.sourceHandle } : {}),
+    ...(e.targetHandle ? { targetHandle: e.targetHandle } : {}),
+    ...(typeof e.label === 'string' ? { label: e.label } : {}),
+    ...(e.style ? { style: e.style as Record<string, string> } : {}),
+  }));
 }
 
 export function useBoard(boardId: string) {
@@ -247,15 +284,21 @@ export function useBoard(boardId: string) {
     (restoredNodes: Node[], restoredEdges: Edge[]) => {
       setNodes(restoredNodes);
       setEdges(restoredEdges);
-      // Sync restored state to backend
-      const nodeUpdates = restoredNodes.map((n) => ({
-        id: n.id,
-        x: n.position.x,
-        y: n.position.y,
-      }));
-      api.bulkUpdateNodes(boardId, nodeUpdates).catch(console.error);
+      // Persist the whole snapshot so undo/redo survives a reload; re-derive from the server's copy.
+      // ponytail: rapid undo/redo requests can race (last response wins); serialize if that shows up.
+      api
+        .replaceGraph(boardId, toCanvasNodes(restoredNodes), toCanvasEdges(restoredEdges))
+        .then((data) => {
+          setBoard(data);
+          setNodes(toFlowNodes(data.nodes));
+          setEdges(toFlowEdges(data.edges));
+        })
+        .catch((err) => {
+          console.error(err);
+          fetchBoard();
+        });
     },
-    [boardId, setNodes, setEdges],
+    [boardId, setNodes, setEdges, fetchBoard],
   );
 
   const undo = useCallback(() => {
