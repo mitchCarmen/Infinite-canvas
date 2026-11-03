@@ -284,13 +284,6 @@ export function useBoard(boardId: string) {
     (restoredNodes: Node[], restoredEdges: Edge[]) => {
       setNodes(restoredNodes);
       setEdges(restoredEdges);
-      // Sync restored state to backend
-      const nodeUpdates = restoredNodes.map((n) => ({
-        id: n.id,
-        x: n.position.x,
-        y: n.position.y,
-      }));
-      api.bulkUpdateNodes(boardId, nodeUpdates).catch(console.error);
       // Persist the whole snapshot so undo/redo survives a reload; re-derive from the server's copy.
       // ponytail: rapid undo/redo requests can race (last response wins); serialize if that shows up.
       api
