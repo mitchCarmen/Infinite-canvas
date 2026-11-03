@@ -169,6 +169,18 @@ export function createApp(boardsDir: string) {
     }
   });
 
+  // --- Graph replace (undo/redo restore) ---
+
+  app.put('/api/boards/:id/graph', async (req, res, next) => {
+    try {
+      const { nodes, edges } = validate(schemas.replaceGraph)(req.body);
+      const board = await store.replaceGraph(req.params.id, nodes, edges, 'user');
+      res.json(board);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // --- Import Mermaid ---
 
   app.post('/api/boards/:id/import-mermaid', async (req, res, next) => {

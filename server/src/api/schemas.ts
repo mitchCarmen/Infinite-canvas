@@ -59,6 +59,20 @@ export const autoLayout = z.object({ direction: z.enum(['TB', 'LR', 'BT', 'RL'])
 
 export const uploadImage = z.object({ imageData: z.string().min(1), filename: z.string().min(1) });
 
+/** Full board graph for undo/redo restore; the store checks cross-references (`Invalid graph: ...`). */
+export const replaceGraph = z.object({
+  nodes: z.array(createNode.extend({
+    id: z.string(),
+    x: z.number(),
+    y: z.number(),
+    width: size,
+    height: size,
+    zIndex: z.number(),
+    parentId: z.string().optional(),
+  })),
+  edges: z.array(createEdge.extend({ id: z.string() })),
+});
+
 /** `validate(schema)(req.body)`: parsed body (unknown keys stripped) or an `Invalid request: ...` error (→ 400). */
 export const validate = <T extends z.ZodType>(schema: T) => (body: unknown): z.infer<T> => {
   const result = schema.safeParse(body);

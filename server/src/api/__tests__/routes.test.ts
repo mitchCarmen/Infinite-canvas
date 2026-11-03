@@ -128,6 +128,49 @@ describe('REST API', () => {
     });
   });
 
+  describe('PUT /api/boards/:id/graph', () => {
+    it('replaces nodes and edges with a snapshot and round-trips it', async () => {
+      const id = (await (await send('POST', '/api/boards', { name: 'Graph' })).json()).id;
+      const snapshot = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'rectangle', label: 'A', x: 10, y: 20 })).json();
+      const withB = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'circle', label: 'B' })).json();
+      await send('POST', `/api/boards/${id}/edges`, { source: withB.nodes[0].id, target: withB.nodes[1].id });
+
+      const res = await send('PUT', `/api/boards/${id}/graph`, { nodes: snapshot.nodes, edges: snapshot.edges });
+      expect(res.status).toBe(200);
+      const restored = await res.json();
+      expect(restored.nodes).toEqual(snapshot.nodes);
+      expect(restored.edges).toEqual([]);
+      expect(restored.activityLog.at(-1)).toMatchObject({ actor: 'user', action: 'restored_graph' });
+
+      const persisted = await (await fetch(`${baseUrl}/api/boards/${id}`)).json();
+      expect(persisted.nodes).toEqual(snapshot.nodes);
+      expect(persisted.edges).toEqual([]);
+    });
+
+    it('rejects a dangling edge with 400 and leaves the board unchanged', async () => {
+      const id = (await (await send('POST', '/api/boards', { name: 'Graph' })).json()).id;
+      const before = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'rectangle', label: 'A' })).json();
+
+      const res = await send('PUT', `/api/boards/${id}/graph`, {
+        nodes: before.nodes,
+        edges: [{ id: 'e1', source: before.nodes[0].id, target: 'missing' }],
+      });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid graph: /);
+      expect(await (await fetch(`${baseUrl}/api/boards/${id}`)).json()).toEqual(before);
+    });
+
+    it('rejects a malformed node with 400 before persisting', async () => {
+      const id = (await (await send('POST', '/api/boards', { name: 'Graph' })).json()).id;
+      const before = await (await send('POST', `/api/boards/${id}/nodes`, { type: 'rectangle', label: 'A' })).json();
+
+      const res = await send('PUT', `/api/boards/${id}/graph`, { nodes: [{ ...before.nodes[0], width: -1 }], edges: [] });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/^Invalid request: /);
+      expect(await (await fetch(`${baseUrl}/api/boards/${id}`)).json()).toEqual(before);
+    });
+  });
+
   describe('Image upload', () => {
     const newBoardId = async () => (await (await send('POST', '/api/boards', { name: 'Uploads' })).json()).id;
 
