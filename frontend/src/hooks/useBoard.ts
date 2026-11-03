@@ -251,8 +251,8 @@ export function useBoard(boardId: string) {
   }, [undoAction, nodes, edges, restore]);
 
   const redo = useCallback(() => {
-    redoAction(restore);
-  }, [redoAction, restore]);
+    redoAction(nodes, edges, restore);
+  }, [redoAction, nodes, edges, restore]);
 
   return {
     nodes,
